@@ -1,35 +1,56 @@
-import { AuthService } from 'src/app/auth.service'
-import { GoogleSheetsService } from 'src/app/google-sheets.service'
+import { Component, OnInit } from '@angular/core'
 
-import { AfterViewInit, Component } from '@angular/core'
+import { GoogleAuthService } from './google-auth.service'
+import { GoogleSheetsService } from './google-sheets.service'
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css']
+  styleUrls: ['./app.component.css'],
 })
-export class AppComponent implements AfterViewInit {
-  public data = []
+export class AppComponent implements OnInit {
+  public flashcards: string[][] = []
 
-  get isInitialized() { return this._authService.isInitialized }
-  get isSignedIn() { return this._authService.isSignedIn }
+  get isAuthenticated(): boolean { return this._authService.isAuthenticated() }
+  get user() { return this._authService.user$.getValue() }
 
-  constructor(private _authService: AuthService, private _googleSheetsService: GoogleSheetsService) { }
+  constructor(private _authService: GoogleAuthService, private _sheetsService: GoogleSheetsService) { }
 
-  ngAfterViewInit(): void {
-    this._authService.init()
+  ngOnInit() {
+    if (this._authService.isAuthenticated()) {
+      this._authService.initializeClient() // Initialize client on load
+      this.loadFlashcards()
+      this._authService.fetchUserInfo(localStorage.getItem('google_token') || '')
+    }
   }
 
-  handleAuthClick() {
-    this._authService.handleAuthClick()
+  onLogin() {
+    this._authService.signIn()
   }
 
-  handleSignoutClick() {
-    this._authService.handleSignoutClick()
+  onLogout() {
+    this._authService.signOut()
+    this.flashcards = []
   }
 
-  getData() {
-    this._googleSheetsService.getSheetData('1JwwqwMXVt7CNfCFqBLI_sVuS3J3ELEoTeGWviz1LteE', 'Words!A2:E')
-      .then((response) => this.data = response.result.values)
+  loadFlashcards() {
+    const spreadsheetId = '1JwwqwMXVt7CNfCFqBLI_sVuS3J3ELEoTeGWviz1LteE'
+    const range = 'Words!A2:E'
+
+    this._sheetsService.getFlashcards(spreadsheetId, range)
+      .subscribe(data => this.flashcards = data.values || [])
+  }
+
+  getProfileImageUrl(): string {
+    const user = this._authService.user$.getValue()
+
+
+    return user ? user.picture : ''
+  }
+
+  getProfileName(): string {
+    const user = this._authService.user$.getValue()
+
+    return user ? user.name : ''
   }
 }

@@ -1,14 +1,30 @@
+import { HttpClient, HttpHeaders } from '@angular/common/http'
 import { Injectable } from '@angular/core'
 
-declare var gapi: any
+import { AppendValuesResponse, SheetsApiResponse, SheetsValueRange } from './google-sheets.types'
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class GoogleSheetsService {
-  constructor() { }
+  constructor(private http: HttpClient) { }
 
-  getSheetData(spreadsheetId: string, range: string): Promise<any> {
-    return gapi.client.sheets.spreadsheets.values.get({ spreadsheetId, range, })
+  getFlashcards(spreadsheetId: string, range: string) {
+    const accessToken = localStorage.getItem('google_token')
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${accessToken}`)
+
+    return this.http.get<SheetsApiResponse>(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${range}`, { headers })
+  }
+
+  addFlashcard(spreadsheetId: string, range: string, values: any[]) {
+    const accessToken = localStorage.getItem('google_token')
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${accessToken}`)
+    const body: SheetsValueRange = {
+      range,
+      majorDimension: 'ROWS',
+      values: [values],
+    }
+
+    return this.http.post<AppendValuesResponse>(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${range}:append?valueInputOption=RAW`, body, { headers })
   }
 }

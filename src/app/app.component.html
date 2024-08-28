@@ -1,8 +1,40 @@
-<p>Sheets API Quickstart</p>
+<!-- app.component.html -->
+<div class="container">
+    <!-- Login Button -->
+    <div *ngIf="!isAuthenticated">
+        <button (click)="onLogin()">Login with Google</button>
+    </div>
 
-<!--Add buttons to initiate auth sequence and sign out-->
-<button *ngIf="isInitialized" id="authorize_button" (click)="handleAuthClick()">Authorize</button>
-<button *ngIf="isInitialized" id="signout_button" (click)="handleSignoutClick()">Sign Out</button>
-<button *ngIf="isSignedIn" id="revoke_button" (click)="getData()">Get Data</button>
+    <!-- User Profile Info -->
+    <div *ngIf="isAuthenticated">
+        <div class="profile">
+            <img *ngIf="user" [src]="user?.picture" alt="Profile Picture"
+                onerror="this.onerror=null;this.src='https://via.placeholder.com/96';">
+            <p>Welcome, {{ user?.name }}!</p>
+            <button (click)="onLogout()">Logout</button>
+        </div>
 
-<div>{{data | json}}</div>
+        <!-- Flashcards Table -->
+        <div *ngIf="flashcards.length > 0">
+            <h3>Your Flashcards</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Front</th>
+                        <th>Back</th>
+                        <th>Correct/Incorrect</th>
+                        <th>Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let card of flashcards">
+                        <td>{{ card[0] }}</td>
+                        <td>{{ card[1] }}</td>
+                        <td>{{ card[2] }}</td>
+                        <td>{{ card[3] }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

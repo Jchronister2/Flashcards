@@ -1,0 +1,31 @@
+/* app.component.css */
+.container {
+    max-width: 600px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.profile img {
+    border-radius: 50%;
+    width: 80px;
+    height: 80px;
+    margin-bottom: 10px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+table,
+th,
+td {
+    border: 1px solid black;
+}
+
+th,
+td {
+    padding: 10px;
+    text-align: left;
+}

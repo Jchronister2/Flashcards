@@ -14,6 +14,21 @@
             <button (click)="onLogout()">Logout</button>
         </div>
 
+        <!-- app.component.html -->
+        <div class="container">
+            <div *ngIf="currentFlashcard">
+                <h3>Flashcard</h3>
+                <p>{{ currentFlashcard[0] }}</p> <!-- Display front side of flashcard -->
+
+                <input type="text" [(ngModel)]="answer" placeholder="Enter your answer" (keydown.enter)="submitAnswer()"
+                    [disabled]="isForceCorrectAnswer && isAnsweredCorrectly" />
+
+                <button (click)="submitAnswer()">Submit</button>
+
+                <p *ngIf="feedback">{{ feedback }}</p>
+            </div>
+        </div>
+
         <!-- Flashcards Table -->
         <div *ngIf="flashcards.length > 0">
             <h3>Your Flashcards</h3>

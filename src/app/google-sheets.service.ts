@@ -16,15 +16,15 @@ export class GoogleSheetsService {
     return this.http.get<SheetsApiResponse>(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${range}`, { headers })
   }
 
-  addFlashcard(spreadsheetId: string, range: string, values: any[]) {
+  updateFlashcard(spreadsheetId: string, range: string, values: any[]) {
     const accessToken = localStorage.getItem('google_token')
     const headers = new HttpHeaders().set('Authorization', `Bearer ${accessToken}`)
-    const body: SheetsValueRange = {
-      range,
+    const body = {
+      range: range,
       majorDimension: 'ROWS',
       values: [values],
     }
 
-    return this.http.post<AppendValuesResponse>(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${range}:append?valueInputOption=RAW`, body, { headers })
+    return this.http.put(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${range}?valueInputOption=RAW`, body, { headers })
   }
 }

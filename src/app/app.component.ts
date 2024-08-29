@@ -50,7 +50,7 @@ export class AppComponent implements OnInit {
 
         setTimeout(() => this.displayRandomFlashcard(), 1000)
       } else {
-        this.feedback = 'Please input the correct answer to proceed.'
+        this.feedback = `Please input the correct answer to proceed: ${this.currentFlashcard[1]}`
       }
       return
     }

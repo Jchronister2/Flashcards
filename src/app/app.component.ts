@@ -46,7 +46,9 @@ export class AppComponent implements OnInit {
   submitAnswer() {
     if (this.isForceCorrectAnswer) {
       if (this.answer.toLowerCase() === this.currentFlashcard[1].toLowerCase()) {
-        this.displayRandomFlashcard()
+        this.feedback = 'Correct! Moving on to the next question.'
+
+        setTimeout(() => this.displayRandomFlashcard(), 1000)
       } else {
         this.feedback = 'Please input the correct answer to proceed.'
       }
@@ -57,20 +59,21 @@ export class AppComponent implements OnInit {
       this.feedback = 'Correct!'
       this.isAnsweredCorrectly = true
       this.updateFlashcardScore(true)
+
+      setTimeout(() => this.displayRandomFlashcard(), 500)
     } else {
-      this.feedback = `Wrong! The correct answer is: ${this.currentFlashcard[1]}`
+      this.feedback = `Wrong! The correct answer is: ${this.currentFlashcard[1]}. Please input the correct answer to proceed.`
       this.isAnsweredCorrectly = false
       this.isForceCorrectAnswer = true
       this.updateFlashcardScore(false)
     }
-
-    this.displayRandomFlashcard()
   }
 
   updateFlashcardScore(isCorrect: boolean) {
     if (isCorrect) {
       this.currentFlashcard[2] = (parseInt(this.currentFlashcard[2]) || 0) + 1
-      this.currentFlashcard[4] = new Date().toISOString()
+      const now = new Date()
+      this.currentFlashcard[4] = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`
     } else {
       this.currentFlashcard[3] = (parseInt(this.currentFlashcard[3]) || 0) + 1
     }

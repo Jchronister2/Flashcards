@@ -1,0 +1,9 @@
+// Custom color overrides
+$primary: #003366; // Navy Blue
+$secondary: #2C3E50; // Slate Gray
+$danger: #D32F2F; // Crimson Red
+$light: #F5F5F5; // Off-White
+$warning: #FFD700; // Goldenrod
+
+// Import Bootstrap after overriding variables
+@import "node_modules/bootstrap/scss/bootstrap";

@@ -26,3 +26,8 @@ td {
     padding: 10px;
     text-align: left;
 }
+
+.flashcard {
+    min-height: 350px;
+    width: 100%;
+}

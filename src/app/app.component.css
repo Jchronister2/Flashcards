@@ -1,7 +1,4 @@
-/* app.component.css */
 .container {
-    max-width: 600px;
-    margin: 0 auto;
     text-align: center;
 }
 
@@ -28,24 +25,4 @@ th,
 td {
     padding: 10px;
     text-align: left;
-}
-
-/* app.component.css */
-.container {
-    max-width: 600px;
-    margin: 0 auto;
-    text-align: center;
-}
-
-input {
-    padding: 10px;
-    font-size: 16px;
-    width: 100%;
-    margin: 20px 0;
-}
-
-button {
-    padding: 10px 20px;
-    font-size: 16px;
-    cursor: pointer;
 }

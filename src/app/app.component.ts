@@ -28,6 +28,13 @@ export class AppComponent implements OnInit {
       this._authService.initializeClient() // Initialize client on load
       this.loadFlashcards()
       this._authService.fetchUserInfo(localStorage.getItem('google_token') || '')
+    } else {
+      this._authService.user$.subscribe(user => {
+        if (user) {
+          this.loadFlashcards()
+          this._authService.fetchUserInfo(localStorage.getItem('google_token') || '')
+        }
+      })
     }
   }
 

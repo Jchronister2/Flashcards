@@ -14,6 +14,5 @@
     - [ ] By flag
 - [ ] Add a way to flag cards for review
 - [ ] Add algorithm for displaying cards
-- [ ] Fix login process
 - [ ] Add a way to connect cards
 - [ ] Make the UI look like cards and decks

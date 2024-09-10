@@ -16,6 +16,23 @@ export class GoogleSheetsService {
     return this.http.get<SheetsApiResponse>(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${range}`, { headers })
   }
 
+  getSheets() {
+    const accessToken = localStorage.getItem('google_token')
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${accessToken}`)
+
+    return this.http.get('https://www.googleapis.com/drive/v3/files?q=mimeType="application/vnd.google-apps.spreadsheet"', { headers })
+  }
+
+  createSheet(title: string) {
+    const accessToken = localStorage.getItem('google_token')
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${accessToken}`)
+    const body = {
+      properties: { title }
+    }
+
+    return this.http.post('https://sheets.googleapis.com/v4/spreadsheets', body, { headers })
+  }
+
   updateFlashcard(spreadsheetId: string, range: string, values: any[]) {
     const accessToken = localStorage.getItem('google_token')
     const headers = new HttpHeaders().set('Authorization', `Bearer ${accessToken}`)

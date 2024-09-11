@@ -17,3 +17,6 @@
 - [ ] Add a way to connect cards
 - [ ] Make the UI look like cards and decks
 - [ ] Generalize loading decks
+- [ ] Add google materials for deck icons
+    - [ ] Use levenstein distance to find icon that is the closest match to the deck name
+- [ ] Add scores to decks and cards to show progress out of 100%

@@ -16,3 +16,4 @@
 - [ ] Add algorithm for displaying cards
 - [ ] Add a way to connect cards
 - [ ] Make the UI look like cards and decks
+- [ ] Generalize loading decks

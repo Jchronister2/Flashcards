@@ -61,7 +61,7 @@ export class FlashService {
 
     // Here you would update the Google Sheet with the new values.
     const spreadsheetId = '1JwwqwMXVt7CNfCFqBLI_sVuS3J3ELEoTeGWviz1LteE'
-    const range = `Words!A${this.flashcards.indexOf(this.currentFlashcard) + 2}:E`
+    const range = `Words!A${this.flashcards.indexOf(this.currentFlashcard) + 2}:F`
 
     this._sheetsService.updateFlashcard(spreadsheetId, range, this.currentFlashcard).subscribe(() => {
       console.log('Flashcard updated successfully')
@@ -70,7 +70,7 @@ export class FlashService {
 
   loadFlashcards() {
     const spreadsheetId = '1JwwqwMXVt7CNfCFqBLI_sVuS3J3ELEoTeGWviz1LteE'
-    const range = 'Words!A2:E'
+    const range = 'Words!A2:F'
 
     this._sheetsService.getFlashcards(spreadsheetId, range).subscribe((response: any) => {
       this.flashcards = response.values.filter((row: any[]) =>

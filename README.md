@@ -6,7 +6,6 @@
     - [ ] Add a way to create cards
     - [ ] Add a way to delete cards
     - [ ] Add a way to edit cards
-- [ ] Add a way to tag cards
 - [ ] Add a way to filter cards by search
     - [ ] By tag
     - [ ] By text

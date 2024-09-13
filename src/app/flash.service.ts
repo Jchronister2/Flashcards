@@ -6,19 +6,47 @@ import { Injectable } from '@angular/core'
   providedIn: 'root'
 })
 export class FlashService {
-  public flashcards: string[][] = []
-  public currentFlashcard: any
   public answer: string = ''
+  public currentFlashcard: any
   public feedback: string = ''
+  public flashcards: string[][] = []
   public isAnsweredCorrectly: boolean = false
   public isForceCorrectAnswer: boolean = false
+  public previousFlashcardIndex: number | null = null
 
   constructor(private _sheetsService: GoogleSheetsService) { }
 
-  displayRandomFlashcard() {
-    const randomIndex = Math.floor(Math.random() * this.flashcards.length)
+  /** Shows the next card based on spaced repetition */
+  showNextFlashcard() {
+    const currentDate = new Date()
 
-    this.currentFlashcard = this.flashcards[randomIndex]
+    let weights = this.flashcards.map((flashcard, index) => {
+      const correctCount = parseInt(flashcard[2]) || 0 // Column C
+      const incorrectCount = parseInt(flashcard[3]) || 0 // Column D
+      const lastCorrectDate = flashcard[4] ? new Date(flashcard[4]) : new Date(0) // Column E
+      const daysSinceLastCorrect = Math.floor((currentDate.getTime() - lastCorrectDate.getTime()) / (1000 * 60 * 60 * 24))
+
+      // Calculate the weight for spaced repetition
+      let weight = (incorrectCount + 1) * (daysSinceLastCorrect + 1) / (correctCount + 1)
+
+      return { index, weight }
+    })
+
+    // Sort by weight in descending order (higher weight = higher priority)
+    weights.sort((a, b) => b.weight - a.weight)
+
+    // Find the first flashcard that is not the same as the previous one
+    let nextFlashcardIndex = weights[0].index
+    for (let i = 0; i < weights.length; i++) {
+      if (weights[i].index !== this.previousFlashcardIndex) {
+        nextFlashcardIndex = weights[i].index
+        break
+      }
+    }
+
+    // Set the next flashcard and update the previous one
+    this.currentFlashcard = this.flashcards[nextFlashcardIndex]
+    this.previousFlashcardIndex = nextFlashcardIndex
     this.answer = ''
     this.feedback = ''
     this.isForceCorrectAnswer = false
@@ -29,7 +57,7 @@ export class FlashService {
       if (this.answer.toLowerCase() === this.currentFlashcard[1].toLowerCase()) {
         this.feedback = 'Correct! Moving on to the next question.'
 
-        setTimeout(() => this.displayRandomFlashcard(), 500)
+        setTimeout(() => this.showNextFlashcard(), 500)
       } else {
         this.feedback = `Please input the correct answer to proceed: ${this.currentFlashcard[1]}`
       }
@@ -41,7 +69,7 @@ export class FlashService {
       this.isAnsweredCorrectly = true
       this.updateFlashcardScore(true)
 
-      setTimeout(() => this.displayRandomFlashcard(), 500)
+      setTimeout(() => this.showNextFlashcard(), 500)
     } else {
       this.feedback = `Wrong! The correct answer is: ${this.currentFlashcard[1]}. Please input the correct answer to proceed.`
       this.isAnsweredCorrectly = false
@@ -77,7 +105,7 @@ export class FlashService {
         row[0] && row[1] // Ensure front side and back side are not empty
       )
 
-      this.displayRandomFlashcard()
+      this.showNextFlashcard()
     })
   }
 }

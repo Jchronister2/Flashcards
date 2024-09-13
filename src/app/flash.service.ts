@@ -19,34 +19,72 @@ export class FlashService {
   /** Shows the next card based on spaced repetition */
   showNextFlashcard() {
     const currentDate = new Date()
+    const randomChance = 1 / 20 // 1/20 chance for a completely random flashcard selection
+    const windowSize = 5 // Window of top 5 flashcards based on weight
 
-    let weights = this.flashcards.map((flashcard, index) => {
-      const correctCount = parseInt(flashcard[2]) || 0 // Column C
-      const incorrectCount = parseInt(flashcard[3]) || 0 // Column D
-      const lastCorrectDate = flashcard[4] ? new Date(flashcard[4]) : new Date(0) // Column E
-      const daysSinceLastCorrect = Math.floor((currentDate.getTime() - lastCorrectDate.getTime()) / (1000 * 60 * 60 * 24))
+    let nextFlashcardIndex = null // Initialize next flashcard index
 
-      // Calculate the weight for spaced repetition
-      let weight = (incorrectCount + 1) * (daysSinceLastCorrect + 1) / (correctCount + 1)
+    // Step 1: Random Flashcard Selection (1/20 chance)
+    if (Math.random() < randomChance) {
+      let randomIndex = Math.floor(Math.random() * this.flashcards.length)
 
-      return { index, weight }
-    })
-
-    // Sort by weight in descending order (higher weight = higher priority)
-    weights.sort((a, b) => b.weight - a.weight)
-
-    // Find the first flashcard that is not the same as the previous one
-    let nextFlashcardIndex = weights[0].index
-    for (let i = 0; i < weights.length; i++) {
-      if (weights[i].index !== this.previousFlashcardIndex) {
-        nextFlashcardIndex = weights[i].index
-        break
+      // Ensure the random card is not the same as the last one
+      while (randomIndex === this.previousFlashcardIndex) {
+        randomIndex = Math.floor(Math.random() * this.flashcards.length)
       }
+
+      console.log('Random card selected:', randomIndex)
+      nextFlashcardIndex = randomIndex
+    }
+    else {
+      // Step 2: Spaced Repetition Logic
+      let weights = this.flashcards.map((flashcard, index) => {
+        const correctCount = parseInt(flashcard[2]) || 0 // Column C
+        const incorrectCount = parseInt(flashcard[3]) || 0 // Column D
+        const lastCorrectDate = flashcard[4] ? new Date(flashcard[4]) : new Date(0) // Column E
+        const daysSinceLastCorrect = Math.floor((currentDate.getTime() - lastCorrectDate.getTime()) / (1000 * 60 * 60 * 24))
+
+        // Calculate the weight for spaced repetition
+        let weight = (incorrectCount + 1) * (daysSinceLastCorrect + 1) / (correctCount + 1)
+
+        return { index, weight }
+      })
+
+      // Sort by weight in descending order (higher weight = higher priority)
+      weights.sort((a, b) => b.weight - a.weight)
+
+      // Select the top 10 (or fewer) flashcards based on weight
+      const topFlashcards = weights.slice(0, Math.min(windowSize, weights.length))
+
+      // Calculate total weight of the top flashcards (for weighted random selection)
+      const totalWeight = topFlashcards.reduce((sum, flashcard) => sum + flashcard.weight, 0)
+
+      // Select one flashcard randomly, but proportionally to its weight
+      let randomValue = Math.random() * totalWeight
+
+      for (let i = 0; i < topFlashcards.length; i++) {
+        randomValue -= topFlashcards[i].weight
+        if (randomValue <= 0) {
+          nextFlashcardIndex = topFlashcards[i].index
+          break
+        }
+      }
+
+      console.log('Next flashcard index (spaced repetition):', nextFlashcardIndex)
     }
 
-    // Set the next flashcard and update the previous one
+    // Step 3: Final Check to Ensure No Repetition
+    if (nextFlashcardIndex === this.previousFlashcardIndex) {
+      console.log('Selected flashcard is the same as previous. Selecting next available.')
+
+      // Fallback to select a different card if the same as the previous one
+      nextFlashcardIndex = (nextFlashcardIndex + 1) % this.flashcards.length
+    }
+
+    // Step 4: Update and Display the Next Flashcard
     this.currentFlashcard = this.flashcards[nextFlashcardIndex]
     this.previousFlashcardIndex = nextFlashcardIndex
+
     this.answer = ''
     this.feedback = ''
     this.isForceCorrectAnswer = false

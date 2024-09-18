@@ -44,10 +44,9 @@ export class StudyComponent {
 
       this.currentFlashcard[5] = tagsArray.join(', ')
 
-      const spreadsheetId = '1JwwqwMXVt7CNfCFqBLI_sVuS3J3ELEoTeGWviz1LteE'
       const range = `Words!F${this.flashcards.indexOf(this.currentFlashcard) + 2}`
 
-      this._sheetsService.updateFlashcard(spreadsheetId, range, [this.currentFlashcard[5]]).subscribe()
+      this._sheetsService.updateFlashcard(this._flashService.spreadsheetId, range, [this.currentFlashcard[5]]).subscribe()
     }
   }
 

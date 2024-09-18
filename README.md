@@ -19,3 +19,4 @@
 - [ ] Add google materials for deck icons
     - [ ] Use levenstein distance to find icon that is the closest match to the deck name
 - [ ] Add scores to decks and cards to show progress out of 100%
+- [ ] Stay logged in for longer

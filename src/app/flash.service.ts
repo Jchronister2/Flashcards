@@ -13,6 +13,7 @@ export class FlashService {
   public isAnsweredCorrectly: boolean = false
   public isForceCorrectAnswer: boolean = false
   public previousFlashcardIndex: number | null = null
+  public spreadsheetId = '14N4niu9dkhGwAndt_kzRIPu2gY2XjaQvvRwMFxEv_fk'
 
   constructor(private _sheetsService: GoogleSheetsService) { }
 
@@ -125,20 +126,17 @@ export class FlashService {
       this.currentFlashcard[3] = (parseInt(this.currentFlashcard[3]) || 0) + 1
     }
 
-    // Here you would update the Google Sheet with the new values.
-    const spreadsheetId = '1JwwqwMXVt7CNfCFqBLI_sVuS3J3ELEoTeGWviz1LteE'
     const range = `Words!A${this.flashcards.indexOf(this.currentFlashcard) + 2}:F`
 
-    this._sheetsService.updateFlashcard(spreadsheetId, range, this.currentFlashcard).subscribe(() => {
+    this._sheetsService.updateFlashcard(this.spreadsheetId, range, this.currentFlashcard).subscribe(() => {
       console.log('Flashcard updated successfully')
     })
   }
 
   loadFlashcards() {
-    const spreadsheetId = '1JwwqwMXVt7CNfCFqBLI_sVuS3J3ELEoTeGWviz1LteE'
     const range = 'Words!A2:F'
 
-    this._sheetsService.getFlashcards(spreadsheetId, range).subscribe((response: any) => {
+    this._sheetsService.getFlashcards(this.spreadsheetId, range).subscribe((response: any) => {
       this.flashcards = response.values.filter((row: any[]) =>
         row[0] && row[1] // Ensure front side and back side are not empty
       )

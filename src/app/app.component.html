@@ -8,9 +8,9 @@
     <div *ngIf="isAuthenticated">
         <!-- User Profile Info -->
         <div class="profile">
-            <img *ngIf="user" [src]="user?.picture" alt="Profile Picture"
-                onerror="this.onerror=null;this.src='https://via.placeholder.com/96';">
-            <p>Welcome, {{ user?.name }}!</p>
+            <img [src]="getProfileImageUrl()" alt="Profile Picture" (error)="handleImageError($event)"
+                style="width: 96px; height: 96px; border-radius: 50%;">
+            <p>Welcome, {{ getProfileName() }}!</p>
             <button (click)="onLogout()" class="btn btn-outline-danger">Logout</button>
         </div>
 

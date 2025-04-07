@@ -18,14 +18,7 @@ export class AppComponent implements OnInit {
 
   ngOnInit() {
     if (this._authService.isAuthenticated()) {
-      this._authService.initializeClient() // Initialize client on load
-      this._authService.fetchUserInfo(localStorage.getItem('google_token') || '')
-    } else {
-      this._authService.user$.subscribe(user => {
-        if (user) {
-          this._authService.fetchUserInfo(localStorage.getItem('google_token') || '')
-        }
-      })
+      this._authService.initializeClient()
     }
   }
 
@@ -39,13 +32,16 @@ export class AppComponent implements OnInit {
 
   getProfileImageUrl(): string {
     const user = this._authService.user$.getValue()
-
-    return user ? user.picture : ''
+    return user?.picture || ''
   }
 
   getProfileName(): string {
     const user = this._authService.user$.getValue()
+    return user?.name || ''
+  }
 
-    return user ? user.name : ''
+  handleImageError(event: Event) {
+    const img = event.target as HTMLImageElement
+    img.src = 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y'
   }
 }

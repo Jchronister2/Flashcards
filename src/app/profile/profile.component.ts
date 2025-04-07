@@ -1,4 +1,5 @@
 import { Component } from '@angular/core'
+import { Router } from '@angular/router'
 
 import { GoogleAuthService } from '../google-auth.service'
 
@@ -12,7 +13,10 @@ export class ProfileComponent {
 
     get user() { return this._authService.user$.getValue() }
 
-    constructor(private _authService: GoogleAuthService) { }
+    constructor(
+        private _authService: GoogleAuthService,
+        private _router: Router
+    ) { }
 
     toggleMenu() {
         this.isMenuOpen = !this.isMenuOpen
@@ -24,6 +28,7 @@ export class ProfileComponent {
 
     onLogout() {
         this._authService.signOut()
+        this._router.navigate(['/login'])
     }
 
     handleImageError(event: Event) {

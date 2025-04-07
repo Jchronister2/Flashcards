@@ -5,26 +5,30 @@ import { AppModule } from './app/app.module'
 import { environment } from './environments/environment'
 
 if (environment.production) {
-  enableProdMode();
+  enableProdMode()
 }
 
-// Declare gapi as a global variable
-declare let gapi: any;
+// Declare global variables
+declare global {
+  interface Window {
+    google: any
+  }
+}
 
 function startApp() {
   platformBrowserDynamic().bootstrapModule(AppModule)
-    .catch(err => console.error(err));
+    .catch(err => console.error(err))
 }
 
-function loadGapi() {
-  gapi.load('client:auth2', startApp);
+function loadGoogleIdentity() {
+  const script = document.createElement('script')
+  script.src = 'https://accounts.google.com/gsi/client'
+  script.async = true
+  script.defer = true
+  script.onload = () => {
+    startApp()
+  }
+  document.head.appendChild(script)
 }
 
-function loadGooglePlatform() {
-  const script = document.createElement('script');
-  script.src = 'https://apis.google.com/js/api.js';
-  script.onload = loadGapi;
-  document.body.appendChild(script);
-}
-
-loadGooglePlatform();
+loadGoogleIdentity()

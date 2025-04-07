@@ -1,7 +1,9 @@
 import { BehaviorSubject } from 'rxjs'
 
-// google-auth.service.ts
 import { Injectable } from '@angular/core'
+import { Router } from '@angular/router'
+
+// google-auth.service.ts
 
 const CLIENT_ID = '249508522283-12oe76736pr2iknoefl5rd8li61dfbec.apps.googleusercontent.com'
 
@@ -9,11 +11,21 @@ const CLIENT_ID = '249508522283-12oe76736pr2iknoefl5rd8li61dfbec.apps.googleuser
   providedIn: 'root',
 })
 export class GoogleAuthService {
-  private _client: google.accounts.oauth2.TokenClient | undefined
+  private _tokenClient: any
   public user$ = new BehaviorSubject<any | null>(null)
 
-  constructor() {
-    this.initializeClient()
+  constructor(private _router: Router) {
+    // Wait for Google API to be ready
+    if (window.google) {
+      this.initializeClient()
+    } else {
+      const checkGoogle = setInterval(() => {
+        if (window.google) {
+          this.initializeClient()
+          clearInterval(checkGoogle)
+        }
+      }, 100)
+    }
 
     // If already authenticated, fetch user info
     if (this.isAuthenticated()) {
@@ -25,24 +37,35 @@ export class GoogleAuthService {
   }
 
   initializeClient() {
-    this._client = google.accounts.oauth2.initTokenClient({
+    this._tokenClient = window.google.accounts.oauth2.initTokenClient({
       client_id: CLIENT_ID,
       scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile',
-      callback: (tokenResponse) => {
+      callback: (tokenResponse: any) => {
         if (tokenResponse && tokenResponse.access_token) {
           this.fetchUserInfo(tokenResponse.access_token)
         }
+      },
+      error_callback: (error: any) => {
+        console.error('Error getting token:', error)
+        this.signOut()
       }
     })
   }
 
   signIn() {
-    this._client?.requestAccessToken()
+    if (this._tokenClient) {
+      this._tokenClient.requestAccessToken()
+    } else {
+      console.error('Google API client not initialized')
+    }
   }
 
   signOut() {
     this.user$.next(null)
     localStorage.removeItem('google_token')
+    window.google?.accounts.oauth2.revoke(localStorage.getItem('google_token') || '', () => {
+      this._router.navigate(['/'])
+    })
   }
 
   fetchUserInfo(accessToken: string) {
@@ -56,8 +79,10 @@ export class GoogleAuthService {
       .then(profile => {
         this.user$.next(profile)
         localStorage.setItem('google_token', accessToken)
+        this._router.navigate(['/dashboard'])
       })
       .catch(error => {
+        console.error('Error fetching user info:', error)
         this.signOut()
       })
   }

@@ -6,10 +6,6 @@
                 <option [ngValue]="null">Select a deck</option>
                 <option *ngFor="let deck of decks" [value]="deck.id">{{ deck.name }}</option>
             </select>
-            <select class="form-select" *ngIf="currentDeck" [(ngModel)]="selectedSheetName" (change)="onSheetChange()">
-                <option [ngValue]="null">Select a sheet</option>
-                <option *ngFor="let sheet of currentDeck.sheets" [value]="sheet.name">{{ sheet.name }}</option>
-            </select>
         </div>
     </div>
 
@@ -20,9 +16,6 @@
         </div>
         <div *ngIf="decks.length > 0 && !selectedDeckId">
             <p class="h4 mb-3">Please select a deck to start studying</p>
-        </div>
-        <div *ngIf="selectedDeckId && !selectedSheetName">
-            <p class="h4 mb-3">Please select a sheet to start studying</p>
         </div>
     </div>
 
@@ -54,7 +47,7 @@
                 </div>
 
                 <div class="position-absolute top-50 start-50 translate-middle" style="flex-grow: 1;">
-                    <p class="card-text text-center" style="font-size: 1.5rem;">{{ currentFlashcard[0] }}</p>
+                    <p class="card-text text-center" style="font-size: 1.5rem;">{{ currentFlashcard.front }}</p>
                 </div>
 
                 <div class="position-absolute bottom-0 start-50 translate-middle" style="flex-grow: 1;">

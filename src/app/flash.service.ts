@@ -3,38 +3,26 @@ import { BehaviorSubject } from 'rxjs'
 import { HttpClient } from '@angular/common/http'
 import { Injectable } from '@angular/core'
 
-import { GoogleSheetsService } from './google-sheets.service'
-
-interface Deck {
-  id: string
-  name: string
-  sheets: Sheet[]
-}
-
-interface Sheet {
-  name: string
-  range: string
-  sheetId?: number
-}
+import { Deck, Flashcard, GoogleSheetsService } from './google-sheets.service'
 
 @Injectable({
   providedIn: 'root'
 })
 export class FlashService {
+  private _spreadsheetId = new BehaviorSubject<string | null>(null)
   private _decks = new BehaviorSubject<Deck[]>([])
   private _currentDeck = new BehaviorSubject<Deck | null>(null)
-  private _currentSheet = new BehaviorSubject<Sheet | null>(null)
-  private _flashcards = new BehaviorSubject<any[]>([])
-  private _currentFlashcard: any = null
+  private _flashcards = new BehaviorSubject<Flashcard[]>([])
+  private _currentFlashcard: Flashcard | null = null
   private _answer = ''
   private _feedback = ''
   private _isAnsweredCorrectly = false
   private _isForceCorrectAnswer = false
   private _previousFlashcardIndex: number | null = null
 
+  get spreadsheetId() { return this._spreadsheetId.getValue() }
   get decks() { return this._decks.getValue() }
   get currentDeck() { return this._currentDeck.getValue() }
-  get currentSheet() { return this._currentSheet.getValue() }
   get flashcards() { return this._flashcards.getValue() }
   get answer() { return this._answer }
   set answer(value: string) { this._answer = value }
@@ -50,13 +38,59 @@ export class FlashService {
 
   constructor(private _sheetsService: GoogleSheetsService, private _http: HttpClient) { }
 
-  /** Shows the next card based on spaced repetition */
+  initialize() {
+    this._sheetsService.getUserSpreadsheet().subscribe(spreadsheetId => {
+      this._spreadsheetId.next(spreadsheetId)
+      this.loadDecks()
+    })
+  }
+
+  private loadDecks() {
+    const spreadsheetId = this.spreadsheetId
+    if (!spreadsheetId) return
+
+    this._sheetsService.getDecks(spreadsheetId).subscribe(decks => {
+      this._decks.next(decks)
+
+      // Try to restore last selected deck
+      const lastDeckName = this._sheetsService.getLastDeckName()
+      if (lastDeckName) {
+        const deck = decks.find(d => d.name === lastDeckName)
+        if (deck) {
+          this.selectDeck(deck.id)
+        }
+      }
+    })
+  }
+
+  selectDeck(deckId: number) {
+    const deck = this.decks.find(d => d.id === deckId)
+    if (!deck || !this.spreadsheetId) return
+
+    this._currentDeck.next(deck)
+    this._sheetsService.setLastDeckName(deck.name)
+    this.loadFlashcards()
+  }
+
+  private loadFlashcards() {
+    const spreadsheetId = this.spreadsheetId
+    const deck = this.currentDeck
+    if (!spreadsheetId || !deck) return
+
+    this._sheetsService.getFlashcards(spreadsheetId, deck.name).subscribe(flashcards => {
+      this._flashcards.next(flashcards)
+      if (flashcards.length > 0) {
+        this.showNextFlashcard()
+      }
+    })
+  }
+
   showNextFlashcard() {
     const currentDate = new Date()
     const randomChance = 1 / 20 // 1/20 chance for a completely random flashcard selection
     const windowSize = 5 // Window of top 5 flashcards based on weight
 
-    let nextFlashcardIndex = null // Initialize next flashcard index
+    let nextFlashcardIndex = null
 
     // Step 1: Random Flashcard Selection (1/20 chance)
     if (Math.random() < randomChance) {
@@ -67,15 +101,14 @@ export class FlashService {
         randomIndex = Math.floor(Math.random() * this.flashcards.length)
       }
 
-      console.log('Random card selected:', randomIndex)
       nextFlashcardIndex = randomIndex
     }
     else {
       // Step 2: Spaced Repetition Logic
       let weights = this.flashcards.map((flashcard, index) => {
-        const correctCount = parseInt(flashcard[2]) || 0 // Column C
-        const incorrectCount = parseInt(flashcard[3]) || 0 // Column D
-        const lastCorrectDate = flashcard[4] ? new Date(flashcard[4]) : new Date(0) // Column E
+        const correctCount = flashcard.correctCount
+        const incorrectCount = flashcard.incorrectCount
+        const lastCorrectDate = flashcard.lastCorrectDate ? new Date(flashcard.lastCorrectDate) : new Date(0)
         const daysSinceLastCorrect = Math.floor((currentDate.getTime() - lastCorrectDate.getTime()) / (1000 * 60 * 60 * 24))
 
         // Calculate the weight for spaced repetition
@@ -87,7 +120,7 @@ export class FlashService {
       // Sort by weight in descending order (higher weight = higher priority)
       weights.sort((a, b) => b.weight - a.weight)
 
-      // Select the top 10 (or fewer) flashcards based on weight
+      // Select the top flashcards based on weight
       const topFlashcards = weights.slice(0, Math.min(windowSize, weights.length))
 
       // Calculate total weight of the top flashcards (for weighted random selection)
@@ -103,15 +136,10 @@ export class FlashService {
           break
         }
       }
-
-      console.log('Next flashcard index (spaced repetition):', nextFlashcardIndex)
     }
 
     // Step 3: Final Check to Ensure No Repetition
     if (nextFlashcardIndex === this.previousFlashcardIndex) {
-      console.log('Selected flashcard is the same as previous. Selecting next available.')
-
-      // Fallback to select a different card if the same as the previous one
       nextFlashcardIndex = (nextFlashcardIndex + 1) % this.flashcards.length
     }
 
@@ -125,25 +153,25 @@ export class FlashService {
   }
 
   submitAnswer() {
-    if (this.isForceCorrectAnswer) {
-      if (this.answer.toLowerCase() === this.currentFlashcard[1].toLowerCase()) {
-        this.feedback = 'Correct! Moving on to the next question.'
+    if (!this.currentFlashcard) return
 
+    if (this.isForceCorrectAnswer) {
+      if (this.answer.toLowerCase() === this.currentFlashcard.back.toLowerCase()) {
+        this.feedback = 'Correct! Moving on to the next question.'
         setTimeout(() => this.showNextFlashcard(), 500)
       } else {
-        this.feedback = `Please input the correct answer to proceed: ${this.currentFlashcard[1]}`
+        this.feedback = `Please input the correct answer to proceed: ${this.currentFlashcard.back}`
       }
       return
     }
 
-    if (this.answer.toLowerCase() === this.currentFlashcard[1].toLowerCase()) {
+    if (this.answer.toLowerCase() === this.currentFlashcard.back.toLowerCase()) {
       this.feedback = 'Correct!'
       this._isAnsweredCorrectly = true
       this.updateFlashcardScore(true)
-
       setTimeout(() => this.showNextFlashcard(), 500)
     } else {
-      this.feedback = `Wrong! The correct answer is: ${this.currentFlashcard[1]}. Please input the correct answer to proceed.`
+      this.feedback = `Wrong! The correct answer is: ${this.currentFlashcard.back}. Please input the correct answer to proceed.`
       this._isAnsweredCorrectly = false
       this._isForceCorrectAnswer = true
       this.updateFlashcardScore(false)
@@ -151,101 +179,53 @@ export class FlashService {
   }
 
   updateFlashcardScore(isCorrect: boolean) {
-    const deck = this.currentDeck
-    if (!deck || !this.currentFlashcard) return
+    if (!this.currentFlashcard || !this.spreadsheetId || !this.currentDeck) return
+
+    const flashcard = { ...this.currentFlashcard }
 
     if (isCorrect) {
-      this.currentFlashcard[2] = (parseInt(this.currentFlashcard[2]) || 0) + 1
+      flashcard.correctCount++
       const now = new Date()
-      this.currentFlashcard[4] = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`
+      flashcard.lastCorrectDate = now.toISOString()
     } else {
-      this.currentFlashcard[3] = (parseInt(this.currentFlashcard[3]) || 0) + 1
+      flashcard.incorrectCount++
     }
 
-    const range = `${this.currentSheet?.name}!A${this.flashcards.indexOf(this.currentFlashcard) + 2}:F`
-
-    this._sheetsService.updateFlashcard(deck.id, range, this.currentFlashcard).subscribe(() => {
-      console.log('Flashcard updated successfully')
+    const index = this.flashcards.indexOf(this.currentFlashcard)
+    this._sheetsService.updateFlashcard(
+      this.spreadsheetId,
+      this.currentDeck.name,
+      index,
+      flashcard
+    ).subscribe(() => {
+      // Update the flashcard in our local array
+      const updatedFlashcards = [...this.flashcards]
+      updatedFlashcards[index] = flashcard
+      this._flashcards.next(updatedFlashcards)
+      this._currentFlashcard = flashcard
     })
   }
 
-  loadUserSpreadsheets() {
-    this._sheetsService.getUserSpreadsheets().subscribe(response => {
-      const files = response.files
-      const decks: Deck[] = []
+  createDeck(name: string) {
+    if (!this.spreadsheetId) return
 
-      // For each spreadsheet, get its sheets
-      const promises = files.map(file => {
-        return this._sheetsService.getSpreadsheetDetails(file.id).subscribe(resp => {
-          const sheets = resp.sheets.map(sheet => ({
-            name: sheet.properties.title,
-            range: `${sheet.properties.title}!A2:F`,
-            sheetId: sheet.properties.sheetId
-          }))
-          decks.push({
-            id: file.id,
-            name: file.name,
-            sheets
-          })
-          this._decks.next(decks)
-        })
-      })
+    this._sheetsService.createDeck(this.spreadsheetId, name).subscribe(deck => {
+      this._decks.next([...this.decks, deck])
+      this.selectDeck(deck.id)
     })
   }
 
-  selectDeck(deckId: string) {
-    const deck = this.decks.find(d => d.id === deckId)
-    if (deck) {
-      this._currentDeck.next(deck)
-      if (deck.sheets.length > 0) {
-        this.selectSheet(deck.sheets[0].name)
-      }
-    }
-  }
+  renameDeck(deckId: number, newName: string) {
+    if (!this.spreadsheetId) return
 
-  selectSheet(sheetName: string) {
-    const deck = this.currentDeck
-    if (!deck) return
-
-    const sheet = deck.sheets.find(s => s.name === sheetName)
-    if (sheet) {
-      this._currentSheet.next(sheet)
-      this.loadFlashcards()
-    }
-  }
-
-  loadFlashcards() {
-    const deck = this.currentDeck
-    const sheet = this.currentSheet
-    if (!deck || !sheet) return
-
-    this._sheetsService.getFlashcards(deck.id, sheet.range).subscribe(response => {
-      const values = response.values || []
-      this._flashcards.next(values)
-      if (values.length > 0) {
-        this._currentFlashcard = values[0]
-      }
-    })
-  }
-
-  updateSheetName(oldName: string, newName: string) {
-    const deck = this.currentDeck
-    const sheet = this.currentSheet
-    if (!deck || !sheet || !sheet.sheetId) return
-
-    this._sheetsService.updateSheetName(deck.id, sheet.sheetId, newName).subscribe(() => {
-      // Update local state
-      const updatedSheets = deck.sheets.map(s =>
-        s.name === oldName
-          ? { ...s, name: newName, range: `${newName}!A2:F` }
-          : s
+    this._sheetsService.renameDeck(this.spreadsheetId, deckId, newName).subscribe(() => {
+      const updatedDecks = this.decks.map(deck =>
+        deck.id === deckId ? { ...deck, name: newName } : deck
       )
-      const updatedDeck = { ...deck, sheets: updatedSheets }
-      this._decks.next(this.decks.map(d =>
-        d.id === deck.id ? updatedDeck : d
-      ))
-      if (this.currentSheet?.name === oldName) {
-        this._currentSheet.next({ ...this.currentSheet, name: newName, range: `${newName}!A2:F` })
+      this._decks.next(updatedDecks)
+
+      if (this.currentDeck?.id === deckId) {
+        this._currentDeck.next({ ...this.currentDeck, name: newName })
       }
     })
   }

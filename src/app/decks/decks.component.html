@@ -1,38 +1,26 @@
 <div class="decks-container">
-    <!-- Spreadsheets List -->
+    <!-- Decks List -->
     <div class="deck-list">
-        <h2>Your Spreadsheets</h2>
+        <h2>Your Decks</h2>
         <div class="deck-buttons">
             <button class="deck-button" *ngFor="let deck of decks" [class.active]="deck.id === currentDeck?.id"
                 (click)="onDeckSelect(deck.id)">
-                <span class="material-icons">table_chart</span>
-                {{ deck.name }}
-            </button>
-        </div>
-    </div>
-
-    <!-- Sheets List -->
-    <div class="deck-list" *ngIf="currentDeck">
-        <h2>Sheets in {{ currentDeck.name }}</h2>
-        <div class="deck-buttons">
-            <button class="deck-button" *ngFor="let sheet of currentDeck.sheets"
-                [class.active]="sheet.name === currentSheet?.name" (click)="onSheetSelect(sheet.name)">
                 <span class="material-icons">style</span>
-                <ng-container *ngIf="isEditingSheetName && sheet.name === currentSheet?.name">
-                    <input #sheetNameInput [(ngModel)]="newSheetName" (keyup.enter)="saveSheetName()"
-                        (keyup.escape)="cancelEditingSheetName()" (blur)="saveSheetName()" class="sheet-name-input"
-                        [attr.size]="newSheetName.length" autofocus>
+                <ng-container *ngIf="isEditingDeckName && deck.id === currentDeck?.id">
+                    <input #deckNameInput [(ngModel)]="newDeckName" (keyup.enter)="saveDeckName()"
+                        (keyup.escape)="cancelEditingDeckName()" (blur)="saveDeckName()" class="deck-name-input"
+                        [attr.size]="newDeckName.length" autofocus>
                 </ng-container>
-                <ng-container *ngIf="!(isEditingSheetName && sheet.name === currentSheet?.name)">
-                    <span (dblclick)="startEditingSheetName()">{{ sheet.name }}</span>
+                <ng-container *ngIf="!(isEditingDeckName && deck.id === currentDeck?.id)">
+                    <span (dblclick)="startEditingDeckName()">{{ deck.name }}</span>
                 </ng-container>
             </button>
         </div>
     </div>
 
     <!-- Flashcards Table -->
-    <div class="flashcards-table" *ngIf="currentSheet && flashcards.length > 0">
-        <h3>{{ currentSheet.name }}</h3>
+    <div class="flashcards-table" *ngIf="currentDeck && flashcards.length > 0">
+        <h3>{{ currentDeck.name }}</h3>
         <table>
             <thead>
                 <tr>
@@ -70,11 +58,11 @@
             </thead>
             <tbody>
                 <tr *ngFor="let card of flashcards">
-                    <td>{{ card[0] }}</td>
-                    <td>{{ card[1] }}</td>
-                    <td>{{ card[2] }}</td>
-                    <td>{{ card[3] }}</td>
-                    <td>{{ card[4] | date }}</td>
+                    <td>{{ card.front }}</td>
+                    <td>{{ card.back }}</td>
+                    <td>{{ card.correctCount }}</td>
+                    <td>{{ card.incorrectCount }}</td>
+                    <td>{{ card.lastCorrectDate | date }}</td>
                 </tr>
             </tbody>
         </table>
@@ -82,11 +70,7 @@
 
     <!-- Empty State -->
     <div class="empty-state" *ngIf="!currentDeck">
-        <span class="material-icons">table_chart</span>
-        <p>Select a spreadsheet to view its sheets</p>
-    </div>
-    <div class="empty-state" *ngIf="currentDeck && !currentSheet">
         <span class="material-icons">style</span>
-        <p>Select a sheet to view flashcards</p>
+        <p>Select a deck to view flashcards</p>
     </div>
 </div>

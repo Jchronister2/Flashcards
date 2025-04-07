@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core'
 
 import { FlashService } from '../flash.service'
+import { Flashcard } from '../google-sheets.service'
 
 interface SortConfig {
     column: string
@@ -14,8 +15,8 @@ interface SortConfig {
 })
 export class DecksComponent implements OnInit {
     sortConfig: SortConfig = { column: '', direction: 'asc' }
-    isEditingSheetName = false
-    newSheetName = ''
+    isEditingDeckName = false
+    newDeckName = ''
 
     get decks() {
         return this._flashService.decks
@@ -25,10 +26,6 @@ export class DecksComponent implements OnInit {
         return this._flashService.currentDeck
     }
 
-    get currentSheet() {
-        return this._flashService.currentSheet
-    }
-
     get flashcards() {
         return this.sortFlashcards(this._flashService.flashcards)
     }
@@ -36,36 +33,32 @@ export class DecksComponent implements OnInit {
     constructor(private _flashService: FlashService) { }
 
     ngOnInit() {
-        this._flashService.loadUserSpreadsheets()
+        this._flashService.initialize()
     }
 
-    onDeckSelect(deckId: string) {
+    onDeckSelect(deckId: number) {
         this._flashService.selectDeck(deckId)
     }
 
-    onSheetSelect(sheetName: string) {
-        this._flashService.selectSheet(sheetName)
+    startEditingDeckName() {
+        if (!this.currentDeck) return
+        this.isEditingDeckName = true
+        this.newDeckName = this.currentDeck.name
     }
 
-    startEditingSheetName() {
-        if (!this.currentSheet) return
-        this.isEditingSheetName = true
-        this.newSheetName = this.currentSheet.name
+    saveDeckName() {
+        if (!this.currentDeck || !this.newDeckName.trim()) return
+        this._flashService.renameDeck(this.currentDeck.id, this.newDeckName.trim())
+        this.isEditingDeckName = false
+        this.newDeckName = ''
     }
 
-    saveSheetName() {
-        if (!this.currentSheet || !this.newSheetName.trim()) return
-        this._flashService.updateSheetName(this.currentSheet.name, this.newSheetName.trim())
-        this.isEditingSheetName = false
-        this.newSheetName = ''
+    cancelEditingDeckName() {
+        this.isEditingDeckName = false
+        this.newDeckName = ''
     }
 
-    cancelEditingSheetName() {
-        this.isEditingSheetName = false
-        this.newSheetName = ''
-    }
-
-    sortFlashcards(cards: any[]) {
+    sortFlashcards(cards: Flashcard[]) {
         if (!this.sortConfig.column) return cards
 
         return [...cards].sort((a, b) => {
@@ -86,13 +79,13 @@ export class DecksComponent implements OnInit {
         }
     }
 
-    private getValueByColumn(card: any[], column: string): any {
+    private getValueByColumn(card: Flashcard, column: string): any {
         switch (column) {
-            case 'front': return card[0]
-            case 'back': return card[1]
-            case 'correct': return card[2]
-            case 'incorrect': return card[3]
-            case 'lastCorrect': return new Date(card[4])
+            case 'front': return card.front
+            case 'back': return card.back
+            case 'correct': return card.correctCount
+            case 'incorrect': return card.incorrectCount
+            case 'lastCorrect': return card.lastCorrectDate ? new Date(card.lastCorrectDate) : null
             default: return ''
         }
     }

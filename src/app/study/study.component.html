@@ -1,73 +1,104 @@
-<div class="d-flex justify-content-between align-items-center" style="min-height: 350px">
-    <!-- Front of Flashcard -->
-    <div class="position-relative" style="width: 45%; min-height: 350px;">
-        <!-- Back layer card -->
-        <div class="card flashcard bg-primary text-light border-light position-absolute"
-            style="bottom: 10px; right: 10px">
-        </div>
-        <!-- Middle layer card -->
-        <div class="card flashcard bg-primary text-light border-light position-absolute"
-            style="bottom: 5px; right: 5px">
-        </div>
-        <!-- Front card -->
-        <div class="card flashcard bg-primary text-light border-light">
-            <div class="d-flex justify-content-between align-items-center p-3 position-relative">
-                <h5 class="card-title position-absolute start-50 translate-middle-x" style="font-size: 1.75rem;">
-                    Front
-                </h5>
-                <span class="material-icons ms-auto" type="button" (click)="showTagInput()">sell</span>
-
-                <!-- Pop-up tag input box -->
-                <div *ngIf="makingTag" class="input-popup position-absolute end-0 mt-2 p-2 border bg-white rounded">
-                    <input #tagInput type="text" class="form-control" placeholder="Enter tag name"
-                        (keydown.enter)="createTag($event)" (focusout)="makingTag = false">
-                </div>
-            </div>
-
-            <div class="position-absolute top-50 start-50 translate-middle" style="flex-grow: 1;">
-                <p class="card-text text-center" style="font-size: 1.5rem;">{{ currentFlashcard[0] }}</p>
-            </div>
-
-            <div class="position-absolute bottom-0 start-50 translate-middle" style="flex-grow: 1;">
-                <div class="d-flex flex-wrap gap-2">
-                    <span *ngFor="let tag of tags" class="badge rounded-pill bg-info">#{{ tag }}</span>
-                </div>
-            </div>
+<div class="study-container">
+    <!-- Deck Selection -->
+    <div class="deck-selector mb-4" *ngIf="decks.length > 0">
+        <div class="d-flex align-items-center gap-3 mb-3">
+            <select class="form-select" [(ngModel)]="selectedDeckId" (change)="onDeckChange()">
+                <option [ngValue]="null">Select a deck</option>
+                <option *ngFor="let deck of decks" [value]="deck.id">{{ deck.name }}</option>
+            </select>
+            <select class="form-select" *ngIf="currentDeck" [(ngModel)]="selectedSheetName" (change)="onSheetChange()">
+                <option [ngValue]="null">Select a sheet</option>
+                <option *ngFor="let sheet of currentDeck.sheets" [value]="sheet.name">{{ sheet.name }}</option>
+            </select>
         </div>
     </div>
 
-    <!-- Input and Back of Flashcard with stacking effect -->
-    <div class="position-relative" style="width: 45%; min-height: 350px;">
-        <!-- Back layer card -->
-        <div class="card flashcard bg-secondary text-light border-light position-absolute"
-            style="top: 10px; left: 10px">
+    <!-- Loading State -->
+    <div *ngIf="!currentFlashcard" class="text-center py-5">
+        <div *ngIf="decks.length === 0">
+            <p class="h4 mb-3">Loading decks...</p>
         </div>
-        <!-- Middle layer card -->
-        <div class="card flashcard bg-secondary text-light border-light position-absolute" style="top: 5px; left: 5px">
+        <div *ngIf="decks.length > 0 && !selectedDeckId">
+            <p class="h4 mb-3">Please select a deck to start studying</p>
         </div>
-        <!-- Front card -->
-        <div class="card flashcard bg-secondary text-light border-light">
-            <div class="p-3 text-center">
-                <h5 class="card-title" style="font-size: 1.75rem;">Back</h5>
-            </div>
+        <div *ngIf="selectedDeckId && !selectedSheetName">
+            <p class="h4 mb-3">Please select a sheet to start studying</p>
+        </div>
+    </div>
 
-            <!-- Input field centered using position-absolute -->
-            <div class="position-absolute top-50 start-50 translate-middle" style="width: 80%;">
-                <input type="text" class="form-control" style="font-size: 1.25rem;" [(ngModel)]="answer"
-                    placeholder="Enter your answer" (keydown.enter)="submitAnswer()"
-                    [disabled]="isForceCorrectAnswer && isAnsweredCorrectly" />
+    <!-- Flashcard Display -->
+    <div class="d-flex justify-content-between align-items-center" style="min-height: 350px" *ngIf="currentFlashcard">
+        <!-- Front of Flashcard -->
+        <div class="position-relative" style="width: 45%; min-height: 350px;">
+            <!-- Back layer card -->
+            <div class="card flashcard bg-primary text-light border-light position-absolute"
+                style="bottom: 10px; right: 10px">
             </div>
+            <!-- Middle layer card -->
+            <div class="card flashcard bg-primary text-light border-light position-absolute"
+                style="bottom: 5px; right: 5px">
+            </div>
+            <!-- Front card -->
+            <div class="card flashcard bg-primary text-light border-light">
+                <div class="d-flex justify-content-between align-items-center p-3 position-relative">
+                    <h5 class="card-title position-absolute start-50 translate-middle-x" style="font-size: 1.75rem;">
+                        Front
+                    </h5>
+                    <span class="material-icons ms-auto" type="button" (click)="showTagInput()">sell</span>
 
-            <!-- Submit button and feedback message at the bottom -->
-            <div class="d-flex flex-column justify-content-center align-items-center p-3"
-                style="width: 100%; position: absolute; bottom: 0;">
-                <!-- Feedback -->
-                <div class="" style="min-height: 1.5rem;">
-                    <p *ngIf="feedback" class="text-light" style="font-size: 1.25rem;">
-                        {{ feedback }}
-                    </p>
+                    <!-- Pop-up tag input box -->
+                    <div *ngIf="makingTag" class="input-popup position-absolute end-0 mt-2 p-2 border bg-white rounded">
+                        <input #tagInput type="text" class="form-control" placeholder="Enter tag name"
+                            (keydown.enter)="createTag($event)" (focusout)="makingTag = false">
+                    </div>
                 </div>
-                <button (click)="submitAnswer()" class="btn btn-success" style="font-size: 1.5rem;">Submit</button>
+
+                <div class="position-absolute top-50 start-50 translate-middle" style="flex-grow: 1;">
+                    <p class="card-text text-center" style="font-size: 1.5rem;">{{ currentFlashcard[0] }}</p>
+                </div>
+
+                <div class="position-absolute bottom-0 start-50 translate-middle" style="flex-grow: 1;">
+                    <div class="d-flex flex-wrap gap-2">
+                        <span *ngFor="let tag of tags" class="badge rounded-pill bg-info">#{{ tag }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Input and Back of Flashcard with stacking effect -->
+        <div class="position-relative" style="width: 45%; min-height: 350px;">
+            <!-- Back layer card -->
+            <div class="card flashcard bg-secondary text-light border-light position-absolute"
+                style="top: 10px; left: 10px">
+            </div>
+            <!-- Middle layer card -->
+            <div class="card flashcard bg-secondary text-light border-light position-absolute"
+                style="top: 5px; left: 5px">
+            </div>
+            <!-- Front card -->
+            <div class="card flashcard bg-secondary text-light border-light">
+                <div class="p-3 text-center">
+                    <h5 class="card-title" style="font-size: 1.75rem;">Back</h5>
+                </div>
+
+                <!-- Input field centered using position-absolute -->
+                <div class="position-absolute top-50 start-50 translate-middle" style="width: 80%;">
+                    <input type="text" class="form-control" style="font-size: 1.25rem;" [(ngModel)]="answer"
+                        placeholder="Enter your answer" (keydown.enter)="submitAnswer()"
+                        [disabled]="isForceCorrectAnswer && isAnsweredCorrectly" />
+                </div>
+
+                <!-- Submit button and feedback message at the bottom -->
+                <div class="d-flex flex-column justify-content-center align-items-center p-3"
+                    style="width: 100%; position: absolute; bottom: 0;">
+                    <!-- Feedback -->
+                    <div class="" style="min-height: 1.5rem;">
+                        <p *ngIf="feedback" class="text-light" style="font-size: 1.25rem;">
+                            {{ feedback }}
+                        </p>
+                    </div>
+                    <button (click)="submitAnswer()" class="btn btn-success" style="font-size: 1.5rem;">Submit</button>
+                </div>
             </div>
         </div>
     </div>

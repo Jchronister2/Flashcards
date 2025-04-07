@@ -5,6 +5,7 @@ import { BrowserModule } from '@angular/platform-browser'
 
 import { AppRoutingModule } from './app-routing.module'
 import { AppComponent } from './app.component'
+import { DecksComponent } from './decks/decks.component'
 import { LoginComponent } from './login/login.component'
 import { ProfileComponent } from './profile/profile.component'
 import { StudyComponent } from './study/study.component'
@@ -14,7 +15,8 @@ import { StudyComponent } from './study/study.component'
     AppComponent,
     StudyComponent,
     LoginComponent,
-    ProfileComponent
+    ProfileComponent,
+    DecksComponent
   ],
   imports: [
     BrowserModule,

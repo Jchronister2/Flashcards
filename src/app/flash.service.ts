@@ -1,21 +1,54 @@
-import { GoogleSheetsService } from 'src/app/google-sheets.service'
+import { BehaviorSubject } from 'rxjs'
 
+import { HttpClient } from '@angular/common/http'
 import { Injectable } from '@angular/core'
+
+import { GoogleSheetsService } from './google-sheets.service'
+
+interface Deck {
+  id: string
+  name: string
+  sheets: Sheet[]
+}
+
+interface Sheet {
+  name: string
+  range: string
+  sheetId?: number
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class FlashService {
-  public answer: string = ''
-  public currentFlashcard: any
-  public feedback: string = ''
-  public flashcards: string[][] = []
-  public isAnsweredCorrectly: boolean = false
-  public isForceCorrectAnswer: boolean = false
-  public previousFlashcardIndex: number | null = null
-  public spreadsheetId = '14N4niu9dkhGwAndt_kzRIPu2gY2XjaQvvRwMFxEv_fk'
+  private _decks = new BehaviorSubject<Deck[]>([])
+  private _currentDeck = new BehaviorSubject<Deck | null>(null)
+  private _currentSheet = new BehaviorSubject<Sheet | null>(null)
+  private _flashcards = new BehaviorSubject<any[]>([])
+  private _currentFlashcard: any = null
+  private _answer = ''
+  private _feedback = ''
+  private _isAnsweredCorrectly = false
+  private _isForceCorrectAnswer = false
+  private _previousFlashcardIndex: number | null = null
 
-  constructor(private _sheetsService: GoogleSheetsService) { }
+  get decks() { return this._decks.getValue() }
+  get currentDeck() { return this._currentDeck.getValue() }
+  get currentSheet() { return this._currentSheet.getValue() }
+  get flashcards() { return this._flashcards.getValue() }
+  get answer() { return this._answer }
+  set answer(value: string) { this._answer = value }
+  get feedback() { return this._feedback }
+  set feedback(value: string) { this._feedback = value }
+  get currentFlashcard() { return this._currentFlashcard }
+  get isAnsweredCorrectly() { return this._isAnsweredCorrectly }
+  set isAnsweredCorrectly(value: boolean) { this._isAnsweredCorrectly = value }
+  get isForceCorrectAnswer() { return this._isForceCorrectAnswer }
+  set isForceCorrectAnswer(value: boolean) { this._isForceCorrectAnswer = value }
+  get previousFlashcardIndex() { return this._previousFlashcardIndex }
+  set previousFlashcardIndex(value: number | null) { this._previousFlashcardIndex = value }
+
+  constructor(private _sheetsService: GoogleSheetsService, private _http: HttpClient) { }
 
   /** Shows the next card based on spaced repetition */
   showNextFlashcard() {
@@ -83,7 +116,7 @@ export class FlashService {
     }
 
     // Step 4: Update and Display the Next Flashcard
-    this.currentFlashcard = this.flashcards[nextFlashcardIndex]
+    this._currentFlashcard = this.flashcards[nextFlashcardIndex]
     this.previousFlashcardIndex = nextFlashcardIndex
 
     this.answer = ''
@@ -105,19 +138,22 @@ export class FlashService {
 
     if (this.answer.toLowerCase() === this.currentFlashcard[1].toLowerCase()) {
       this.feedback = 'Correct!'
-      this.isAnsweredCorrectly = true
+      this._isAnsweredCorrectly = true
       this.updateFlashcardScore(true)
 
       setTimeout(() => this.showNextFlashcard(), 500)
     } else {
       this.feedback = `Wrong! The correct answer is: ${this.currentFlashcard[1]}. Please input the correct answer to proceed.`
-      this.isAnsweredCorrectly = false
-      this.isForceCorrectAnswer = true
+      this._isAnsweredCorrectly = false
+      this._isForceCorrectAnswer = true
       this.updateFlashcardScore(false)
     }
   }
 
   updateFlashcardScore(isCorrect: boolean) {
+    const deck = this.currentDeck
+    if (!deck || !this.currentFlashcard) return
+
     if (isCorrect) {
       this.currentFlashcard[2] = (parseInt(this.currentFlashcard[2]) || 0) + 1
       const now = new Date()
@@ -126,22 +162,91 @@ export class FlashService {
       this.currentFlashcard[3] = (parseInt(this.currentFlashcard[3]) || 0) + 1
     }
 
-    const range = `Words!A${this.flashcards.indexOf(this.currentFlashcard) + 2}:F`
+    const range = `${this.currentSheet?.name}!A${this.flashcards.indexOf(this.currentFlashcard) + 2}:F`
 
-    this._sheetsService.updateFlashcard(this.spreadsheetId, range, this.currentFlashcard).subscribe(() => {
+    this._sheetsService.updateFlashcard(deck.id, range, this.currentFlashcard).subscribe(() => {
       console.log('Flashcard updated successfully')
     })
   }
 
+  loadUserSpreadsheets() {
+    this._sheetsService.getUserSpreadsheets().subscribe(response => {
+      const files = response.files
+      const decks: Deck[] = []
+
+      // For each spreadsheet, get its sheets
+      const promises = files.map(file => {
+        return this._sheetsService.getSpreadsheetDetails(file.id).subscribe(resp => {
+          const sheets = resp.sheets.map(sheet => ({
+            name: sheet.properties.title,
+            range: `${sheet.properties.title}!A2:F`,
+            sheetId: sheet.properties.sheetId
+          }))
+          decks.push({
+            id: file.id,
+            name: file.name,
+            sheets
+          })
+          this._decks.next(decks)
+        })
+      })
+    })
+  }
+
+  selectDeck(deckId: string) {
+    const deck = this.decks.find(d => d.id === deckId)
+    if (deck) {
+      this._currentDeck.next(deck)
+      if (deck.sheets.length > 0) {
+        this.selectSheet(deck.sheets[0].name)
+      }
+    }
+  }
+
+  selectSheet(sheetName: string) {
+    const deck = this.currentDeck
+    if (!deck) return
+
+    const sheet = deck.sheets.find(s => s.name === sheetName)
+    if (sheet) {
+      this._currentSheet.next(sheet)
+      this.loadFlashcards()
+    }
+  }
+
   loadFlashcards() {
-    const range = 'Words!A2:F'
+    const deck = this.currentDeck
+    const sheet = this.currentSheet
+    if (!deck || !sheet) return
 
-    this._sheetsService.getFlashcards(this.spreadsheetId, range).subscribe((response: any) => {
-      this.flashcards = response.values.filter((row: any[]) =>
-        row[0] && row[1] // Ensure front side and back side are not empty
+    this._sheetsService.getFlashcards(deck.id, sheet.range).subscribe(response => {
+      const values = response.values || []
+      this._flashcards.next(values)
+      if (values.length > 0) {
+        this._currentFlashcard = values[0]
+      }
+    })
+  }
+
+  updateSheetName(oldName: string, newName: string) {
+    const deck = this.currentDeck
+    const sheet = this.currentSheet
+    if (!deck || !sheet || !sheet.sheetId) return
+
+    this._sheetsService.updateSheetName(deck.id, sheet.sheetId, newName).subscribe(() => {
+      // Update local state
+      const updatedSheets = deck.sheets.map(s =>
+        s.name === oldName
+          ? { ...s, name: newName, range: `${newName}!A2:F` }
+          : s
       )
-
-      this.showNextFlashcard()
+      const updatedDeck = { ...deck, sheets: updatedSheets }
+      this._decks.next(this.decks.map(d =>
+        d.id === deck.id ? updatedDeck : d
+      ))
+      if (this.currentSheet?.name === oldName) {
+        this._currentSheet.next({ ...this.currentSheet, name: newName, range: `${newName}!A2:F` })
+      }
     })
   }
 }

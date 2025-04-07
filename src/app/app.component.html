@@ -1,37 +1,13 @@
 <!-- app.component.html -->
 <div class="container bg-light">
-    <div *ngIf="isAuthenticated">
-        <!-- Header with Profile -->
+    <div *ngIf="isAuthenticated" class="app-container">
         <div class="app-header">
             <h1>Flashcards</h1>
+            <div class="nav-buttons">
+                <button routerLink="/decks" routerLinkActive="active">Decks</button>
+                <button routerLink="/study" routerLinkActive="active">Study</button>
+            </div>
             <app-profile></app-profile>
-        </div>
-
-        <app-study class=""></app-study>
-
-        <!-- Flashcards Table -->
-        <div *ngIf="flashcards.length > 0">
-            <h3>Your Flashcards</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Front</th>
-                        <th>Back</th>
-                        <th>Correct</th>
-                        <th>Incorrect</th>
-                        <th>Last Correct</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr *ngFor="let card of flashcards">
-                        <td>{{ card[0] }}</td>
-                        <td>{{ card[1] }}</td>
-                        <td>{{ card[2] }}</td>
-                        <td>{{ card[3] }}</td>
-                        <td>{{ card[4] | date }}</td>
-                    </tr>
-                </tbody>
-            </table>
         </div>
     </div>
 

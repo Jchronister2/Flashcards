@@ -1,32 +1,110 @@
-import { FlashService } from 'src/app/flash.service'
-import { GoogleSheetsService } from 'src/app/google-sheets.service'
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core'
 
-import { Component, ElementRef, ViewChild } from '@angular/core'
+import { FlashService } from '../flash.service'
+import { GoogleSheetsService } from '../google-sheets.service'
 
 @Component({
   selector: 'app-study',
   templateUrl: './study.component.html',
   styleUrls: ['./study.component.css']
 })
-export class StudyComponent {
+export class StudyComponent implements OnInit {
   @ViewChild('tagInput') tagInputElement!: ElementRef
 
   public makingTag = false
+  public selectedDeckId: string | null = null
+  public selectedSheetName: string | null = null
 
-  get answer() { return this._flashService.answer }
-  set answer(value: string) { this._flashService.answer = value }
-  get currentFlashcard() { return this._flashService.currentFlashcard }
-  get feedback() { return this._flashService.feedback }
-  get flashcards() { return this._flashService.flashcards }
-  get isAnsweredCorrectly() { return this._flashService.isAnsweredCorrectly }
-  get isForceCorrectAnswer() { return this._flashService.isForceCorrectAnswer }
+  get decks() {
+    return this._flashService.decks
+  }
+
+  get currentDeck() {
+    return this._flashService.currentDeck
+  }
+
+  get currentFlashcard() {
+    return this._flashService.currentFlashcard
+  }
+
+  get answer() {
+    return this._flashService.answer
+  }
+
+  set answer(value: string) {
+    this._flashService.answer = value
+  }
+
+  get feedback() {
+    return this._flashService.feedback
+  }
+
+  get flashcards() {
+    return this._flashService.flashcards
+  }
+
+  get isAnsweredCorrectly() {
+    return this._flashService.isAnsweredCorrectly
+  }
+
+  get isForceCorrectAnswer() {
+    return this._flashService.isForceCorrectAnswer
+  }
+
   get tags(): string[] {
     const currentTags = this.currentFlashcard?.[5] || ''
     return currentTags ? currentTags.split(',').map(tag => tag.trim()) : []
   }
 
-  constructor(private _flashService: FlashService, private _sheetsService: GoogleSheetsService) {
-    this._flashService.loadFlashcards()
+  constructor(
+    private _flashService: FlashService,
+    private _sheetsService: GoogleSheetsService
+  ) { }
+
+  ngOnInit() {
+    // Load decks
+    this._flashService.loadUserSpreadsheets()
+
+    // Load last selected deck and sheet from localStorage
+    const lastDeckId = localStorage.getItem('lastDeckId')
+    const lastSheetName = localStorage.getItem('lastSheetName')
+
+    if (lastDeckId) {
+      this.selectedDeckId = lastDeckId
+      // We need to wait for decks to load before selecting
+      const decksLoadedInterval = setInterval(() => {
+        if (this.decks.length > 0) {
+          clearInterval(decksLoadedInterval)
+          this.onDeckChange()
+
+          if (lastSheetName) {
+            this.selectedSheetName = lastSheetName
+            this.onSheetChange()
+          }
+        }
+      }, 100)
+    }
+  }
+
+  onDeckChange() {
+    if (!this.selectedDeckId) return
+
+    this._flashService.selectDeck(this.selectedDeckId)
+    localStorage.setItem('lastDeckId', this.selectedDeckId)
+
+    // Reset sheet selection unless it's still valid
+    if (!this.currentDeck?.sheets.some(s => s.name === this.selectedSheetName)) {
+      this.selectedSheetName = null
+      localStorage.removeItem('lastSheetName')
+    }
+  }
+
+  onSheetChange() {
+    if (!this.selectedSheetName) return
+
+    this._flashService.selectSheet(this.selectedSheetName)
+    localStorage.setItem('lastSheetName', this.selectedSheetName)
+    this._flashService.showNextFlashcard()
   }
 
   createTag(event: any) {
@@ -44,9 +122,7 @@ export class StudyComponent {
 
       this.currentFlashcard[5] = tagsArray.join(', ')
 
-      const range = `Words!F${this.flashcards.indexOf(this.currentFlashcard) + 2}`
-
-      this._sheetsService.updateFlashcard(this._flashService.spreadsheetId, range, [this.currentFlashcard[5]]).subscribe()
+      this.updateFlashcard()
     }
   }
 
@@ -58,5 +134,12 @@ export class StudyComponent {
 
   submitAnswer() {
     this._flashService.submitAnswer()
+  }
+
+  updateFlashcard() {
+    if (!this._flashService.currentDeck || !this._flashService.currentSheet) return
+
+    const range = `${this._flashService.currentSheet.name}!F${this._flashService.flashcards.indexOf(this.currentFlashcard) + 2}`
+    this._sheetsService.updateFlashcard(this._flashService.currentDeck.id, range, [this.currentFlashcard[5]]).subscribe()
   }
 }

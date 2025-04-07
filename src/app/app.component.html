@@ -1,10 +1,5 @@
 <!-- app.component.html -->
 <div class="container bg-light">
-    <!-- Login Button -->
-    <div *ngIf="!isAuthenticated">
-        <button class="btn btn-primary" (click)="onLogin()">Login with Google</button>
-    </div>
-
     <div *ngIf="isAuthenticated">
         <!-- User Profile Info -->
         <div class="profile">
@@ -41,4 +36,6 @@
             </table>
         </div>
     </div>
+
+    <router-outlet></router-outlet>
 </div>

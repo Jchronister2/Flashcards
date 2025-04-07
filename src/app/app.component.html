@@ -1,12 +1,10 @@
 <!-- app.component.html -->
 <div class="container bg-light">
     <div *ngIf="isAuthenticated">
-        <!-- User Profile Info -->
-        <div class="profile">
-            <img [src]="getProfileImageUrl()" alt="Profile Picture" (error)="handleImageError($event)"
-                style="width: 96px; height: 96px; border-radius: 50%;">
-            <p>Welcome, {{ getProfileName() }}!</p>
-            <button (click)="onLogout()" class="btn btn-outline-danger">Logout</button>
+        <!-- Header with Profile -->
+        <div class="app-header">
+            <h1>Flashcards</h1>
+            <app-profile></app-profile>
         </div>
 
         <app-study class=""></app-study>

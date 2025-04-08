@@ -42,7 +42,9 @@ export class GoogleAuthService {
       scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile',
       callback: (tokenResponse: any) => {
         if (tokenResponse && tokenResponse.access_token) {
-          this.fetchUserInfo(tokenResponse.access_token)
+          this.fetchUserInfo(tokenResponse.access_token).then(() => {
+            this._router.navigate(['/'])
+          })
         }
       },
       error_callback: (error: any) => {
@@ -69,7 +71,7 @@ export class GoogleAuthService {
   }
 
   fetchUserInfo(accessToken: string) {
-    fetch('https://www.googleapis.com/oauth2/v1/userinfo?alt=json&access_token=' + accessToken)
+    return fetch('https://www.googleapis.com/oauth2/v1/userinfo?alt=json&access_token=' + accessToken)
       .then(response => {
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`)
@@ -79,7 +81,6 @@ export class GoogleAuthService {
       .then(profile => {
         this.user$.next(profile)
         localStorage.setItem('google_token', accessToken)
-        this._router.navigate(['/dashboard'])
       })
       .catch(error => {
         console.error('Error fetching user info:', error)

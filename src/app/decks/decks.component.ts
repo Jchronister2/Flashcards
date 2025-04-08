@@ -17,6 +17,7 @@ export class DecksComponent implements OnInit {
     sortConfig: SortConfig = { column: '', direction: 'asc' }
     isEditingDeckName = false
     newDeckName = ''
+    activeTagFilter: string | null = null
 
     get decks() {
         return this._flashService.decks
@@ -27,7 +28,11 @@ export class DecksComponent implements OnInit {
     }
 
     get flashcards() {
-        return this.sortFlashcards(this._flashService.flashcards)
+        let cards = this._flashService.flashcards
+        if (this.activeTagFilter) {
+            cards = cards.filter(card => this.getTags(card.tags).includes(this.activeTagFilter!))
+        }
+        return this.sortFlashcards(cards)
     }
 
     constructor(private _flashService: FlashService) { }
@@ -86,8 +91,13 @@ export class DecksComponent implements OnInit {
             case 'correct': return card.correctCount
             case 'incorrect': return card.incorrectCount
             case 'lastCorrect': return card.lastCorrectDate ? new Date(card.lastCorrectDate) : null
+            case 'tags': return this.getTagsCount(card.tags)
             default: return ''
         }
+    }
+
+    private getTagsCount(tagsString: string): number {
+        return this.getTags(tagsString).length
     }
 
     private compare(a: any, b: any): number {
@@ -98,5 +108,17 @@ export class DecksComponent implements OnInit {
             return a - b
         }
         return String(a).localeCompare(String(b))
+    }
+
+    getTags(tagsString: string): string[] {
+        return tagsString.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)
+    }
+
+    onTagClick(tag: string) {
+        this.activeTagFilter = tag
+    }
+
+    clearTagFilter() {
+        this.activeTagFilter = null
     }
 } 

@@ -9,6 +9,10 @@
     margin-bottom: 10px;
 }
 
+.container-fluid {
+    background-color: var(--bs-light);
+}
+
 .app-container {
     padding: 20px;
 }

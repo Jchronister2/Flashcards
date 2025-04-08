@@ -7,3 +7,15 @@ $warning: #FFD700; // Goldenrod
 
 // Import Bootstrap after overriding variables
 @import "node_modules/bootstrap/scss/bootstrap";
+
+// Global styles
+body {
+    background-color: var(--bs-light);
+    margin: 0;
+    padding: 0;
+}
+
+app-root {
+    display: block;
+    min-height: 100vh;
+}

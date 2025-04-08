@@ -18,6 +18,8 @@ export class DecksComponent implements OnInit {
     isEditingDeckName = false
     newDeckName = ''
     activeTagFilter: string | null = null
+    searchQuery: string = ''
+    private readonly SEARCH_THRESHOLD = 0.7 // 70% similarity threshold
 
     get decks() {
         return this._flashService.decks
@@ -31,6 +33,9 @@ export class DecksComponent implements OnInit {
         let cards = this._flashService.flashcards
         if (this.activeTagFilter) {
             cards = cards.filter(card => this.getTags(card.tags).includes(this.activeTagFilter!))
+        }
+        if (this.searchQuery) {
+            cards = cards.filter(card => this.matchesSearch(card))
         }
         return this.sortFlashcards(cards)
     }
@@ -120,5 +125,71 @@ export class DecksComponent implements OnInit {
 
     clearTagFilter() {
         this.activeTagFilter = null
+    }
+
+    clearFilters() {
+        this.activeTagFilter = null
+        this.searchQuery = ''
+    }
+
+    onSearch() {
+        // The getter will automatically update when searchQuery changes
+    }
+
+    private matchesSearch(card: Flashcard): boolean {
+        if (!this.searchQuery) return true
+
+        const searchLower = this.searchQuery.toLowerCase()
+        const frontLower = card.front.toLowerCase()
+        const backLower = card.back.toLowerCase()
+        const tags = this.getTags(card.tags).map(tag => tag.toLowerCase())
+
+        // Check direct matches first
+        if (frontLower.includes(searchLower) ||
+            backLower.includes(searchLower) ||
+            tags.some(tag => tag.includes(searchLower))) {
+            return true
+        }
+
+        // If no direct match, check fuzzy matches
+        return this.getSimilarity(frontLower, searchLower) >= this.SEARCH_THRESHOLD ||
+            this.getSimilarity(backLower, searchLower) >= this.SEARCH_THRESHOLD ||
+            tags.some(tag => this.getSimilarity(tag, searchLower) >= this.SEARCH_THRESHOLD)
+    }
+
+    private getSimilarity(s1: string, s2: string): number {
+        const longer = s1.length > s2.length ? s1 : s2
+        const shorter = s1.length > s2.length ? s2 : s1
+        const longerLength = longer.length
+
+        if (longerLength === 0) return 1.0
+
+        return (longerLength - this.getEditDistance(longer, shorter)) / longerLength
+    }
+
+    private getEditDistance(s1: string, s2: string): number {
+        s1 = s1.toLowerCase()
+        s2 = s2.toLowerCase()
+
+        const costs = new Array<number>()
+        for (let i = 0; i <= s1.length; i++) {
+            let lastValue = i
+            for (let j = 0; j <= s2.length; j++) {
+                if (i === 0) {
+                    costs[j] = j
+                } else {
+                    if (j > 0) {
+                        let newValue = costs[j - 1]
+                        if (s1.charAt(i - 1) !== s2.charAt(j - 1)) {
+                            newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1
+                        }
+                        costs[j - 1] = lastValue
+                        lastValue = newValue
+                    }
+                }
+            }
+            if (i > 0) costs[s2.length] = lastValue
+        }
+        return costs[s2.length]
     }
 } 

@@ -134,6 +134,7 @@ th:hover .sort-icon {
     background: white;
     border-radius: 8px;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    text-align: center;
 }
 
 .empty-state .material-icons {
@@ -145,6 +146,7 @@ th:hover .sort-icon {
 .empty-state p {
     color: #5f6368;
     font-size: 1rem;
+    margin-bottom: 16px;
 }
 
 .tags-container {
@@ -184,6 +186,52 @@ th:hover .sort-icon {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 16px;
+    gap: 16px;
+}
+
+.header-left {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+}
+
+.search-container {
+    display: flex;
+    align-items: center;
+    background: white;
+    border: 1px solid #dadce0;
+    border-radius: 8px;
+    padding: 8px 12px;
+    transition: all 0.2s ease;
+    max-width: 300px;
+}
+
+.search-container:focus-within {
+    border-color: #1a73e8;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.search-container .material-icons {
+    color: #5f6368;
+    margin-right: 8px;
+}
+
+.search-input {
+    border: none;
+    outline: none;
+    font-size: 0.9rem;
+    color: #202124;
+    width: 100%;
+}
+
+.search-input::placeholder {
+    color: #5f6368;
 }
 
 .active-filter {
@@ -218,4 +266,23 @@ th:hover .sort-icon {
 
 .clear-filter:hover {
     color: #1557b0;
+}
+
+.clear-filters {
+    background: #1a73e8;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.clear-filters:hover {
+    background: #1557b0;
+}
+
+.clear-filters:active {
+    transform: translateY(1px);
 }

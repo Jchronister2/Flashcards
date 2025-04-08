@@ -19,80 +19,102 @@
     </div>
 
     <!-- Flashcards Table -->
-    <div class="flashcards-table" *ngIf="currentDeck && flashcards.length > 0">
+    <div class="flashcards-table" *ngIf="currentDeck">
         <div class="table-header">
-            <h3>{{ currentDeck.name }}</h3>
-            <div class="active-filter" *ngIf="activeTagFilter">
-                <span class="filter-tag">
-                    Showing cards with tag: {{ activeTagFilter }}
-                    <button class="clear-filter" (click)="clearTagFilter()">
-                        <span class="material-icons">close</span>
-                    </button>
-                </span>
+            <div class="header-left">
+                <h3>{{ currentDeck.name }}</h3>
+                <div class="search-container">
+                    <span class="material-icons">search</span>
+                    <input type="text" [(ngModel)]="searchQuery" (ngModelChange)="onSearch()"
+                        placeholder="Search cards..." class="search-input">
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="active-filter" *ngIf="activeTagFilter">
+                    <span class="filter-tag">
+                        Showing cards with tag: {{ activeTagFilter }}
+                        <button class="clear-filter" (click)="clearTagFilter()">
+                            <span class="material-icons">close</span>
+                        </button>
+                    </span>
+                </div>
             </div>
         </div>
-        <table>
-            <thead>
-                <tr>
-                    <th (click)="toggleSort('front')">
-                        Front
-                        <span class="material-icons sort-icon" *ngIf="sortConfig.column === 'front'">
-                            {{ sortConfig.direction === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
-                        </span>
-                    </th>
-                    <th (click)="toggleSort('back')">
-                        Back
-                        <span class="material-icons sort-icon" *ngIf="sortConfig.column === 'back'">
-                            {{ sortConfig.direction === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
-                        </span>
-                    </th>
-                    <th (click)="toggleSort('correct')">
-                        Correct
-                        <span class="material-icons sort-icon" *ngIf="sortConfig.column === 'correct'">
-                            {{ sortConfig.direction === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
-                        </span>
-                    </th>
-                    <th (click)="toggleSort('incorrect')">
-                        Incorrect
-                        <span class="material-icons sort-icon" *ngIf="sortConfig.column === 'incorrect'">
-                            {{ sortConfig.direction === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
-                        </span>
-                    </th>
-                    <th (click)="toggleSort('lastCorrect')">
-                        Last Correct
-                        <span class="material-icons sort-icon" *ngIf="sortConfig.column === 'lastCorrect'">
-                            {{ sortConfig.direction === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
-                        </span>
-                    </th>
-                    <th (click)="toggleSort('tags')">
-                        Tags
-                        <span class="material-icons sort-icon" *ngIf="sortConfig.column === 'tags'">
-                            {{ sortConfig.direction === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
-                        </span>
-                    </th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr *ngFor="let card of flashcards">
-                    <td>{{ card.front }}</td>
-                    <td>{{ card.back }}</td>
-                    <td>{{ card.correctCount }}</td>
-                    <td>{{ card.incorrectCount }}</td>
-                    <td>{{ card.lastCorrectDate | date }}</td>
-                    <td>
-                        <div class="tags-container">
-                            <span class="tag" *ngFor="let tag of getTags(card.tags)" (click)="onTagClick(tag)"
-                                [class.active]="tag === activeTagFilter">
-                                {{ tag }}
+
+        <!-- Table Content -->
+        <div *ngIf="flashcards.length > 0">
+            <table>
+                <thead>
+                    <tr>
+                        <th (click)="toggleSort('front')">
+                            Front
+                            <span class="material-icons sort-icon" *ngIf="sortConfig.column === 'front'">
+                                {{ sortConfig.direction === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
                             </span>
-                        </div>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+                        </th>
+                        <th (click)="toggleSort('back')">
+                            Back
+                            <span class="material-icons sort-icon" *ngIf="sortConfig.column === 'back'">
+                                {{ sortConfig.direction === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
+                            </span>
+                        </th>
+                        <th (click)="toggleSort('correct')">
+                            Correct
+                            <span class="material-icons sort-icon" *ngIf="sortConfig.column === 'correct'">
+                                {{ sortConfig.direction === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
+                            </span>
+                        </th>
+                        <th (click)="toggleSort('incorrect')">
+                            Incorrect
+                            <span class="material-icons sort-icon" *ngIf="sortConfig.column === 'incorrect'">
+                                {{ sortConfig.direction === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
+                            </span>
+                        </th>
+                        <th (click)="toggleSort('lastCorrect')">
+                            Last Correct
+                            <span class="material-icons sort-icon" *ngIf="sortConfig.column === 'lastCorrect'">
+                                {{ sortConfig.direction === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
+                            </span>
+                        </th>
+                        <th (click)="toggleSort('tags')">
+                            Tags
+                            <span class="material-icons sort-icon" *ngIf="sortConfig.column === 'tags'">
+                                {{ sortConfig.direction === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
+                            </span>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let card of flashcards">
+                        <td>{{ card.front }}</td>
+                        <td>{{ card.back }}</td>
+                        <td>{{ card.correctCount }}</td>
+                        <td>{{ card.incorrectCount }}</td>
+                        <td>{{ card.lastCorrectDate | date }}</td>
+                        <td>
+                            <div class="tags-container">
+                                <span class="tag" *ngFor="let tag of getTags(card.tags)" (click)="onTagClick(tag)"
+                                    [class.active]="tag === activeTagFilter">
+                                    {{ tag }}
+                                </span>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state" *ngIf="flashcards.length === 0">
+            <span class="material-icons">search_off</span>
+            <p>No cards found matching your search</p>
+            <button class="clear-filters" (click)="clearFilters()">
+                Clear all filters
+            </button>
+        </div>
     </div>
 
-    <!-- Empty State -->
+    <!-- Initial Empty State -->
     <div class="empty-state" *ngIf="!currentDeck">
         <span class="material-icons">style</span>
         <p>Select a deck to view flashcards</p>

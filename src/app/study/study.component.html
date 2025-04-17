@@ -1,11 +1,15 @@
 <div class="study-container">
     <!-- Deck Selection -->
-    <div class="deck-selector mb-4" *ngIf="decks.length > 0">
-        <div class="d-flex align-items-center gap-3 mb-3">
-            <select class="form-select" [(ngModel)]="selectedDeckId" (change)="onDeckChange()">
-                <option [ngValue]="null">Select a deck</option>
-                <option *ngFor="let deck of decks" [value]="deck.id">{{ deck.name }}</option>
-            </select>
+    <div class="deck-selector" *ngIf="decks.length > 0">
+        <div class="d-flex flex-column">
+            <h2 class="mb-4">Study Session</h2>
+            <div class="deck-buttons">
+                <button *ngFor="let deck of decks" class="deck-button" [class.active]="selectedDeckId === deck.id"
+                    [disabled]="selectedDeckId === deck.id" (click)="selectedDeckId = deck.id; onDeckChange()">
+                    <span class="material-icons">style</span>
+                    {{ deck.name }}
+                </button>
+            </div>
         </div>
     </div>
 

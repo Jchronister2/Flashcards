@@ -19,6 +19,7 @@ export class FlashService {
   private _isAnsweredCorrectly = false
   private _isForceCorrectAnswer = false
   private _previousFlashcardIndex: number | null = null
+  private readonly LAST_SELECTED_DECK_KEY = 'lastSelectedDeckId'
 
   get spreadsheetId() { return this._spreadsheetId.getValue() }
   get decks() { return this._decks.getValue() }
@@ -68,8 +69,14 @@ export class FlashService {
     if (!deck || !this.spreadsheetId) return
 
     this._currentDeck.next(deck)
+    localStorage.setItem(this.LAST_SELECTED_DECK_KEY, deckId.toString())
     this._sheetsService.setLastDeckName(deck.name)
     this.loadFlashcards()
+  }
+
+  getLastSelectedDeckId(): number | null {
+    const lastId = localStorage.getItem(this.LAST_SELECTED_DECK_KEY)
+    return lastId ? parseInt(lastId, 10) : null
   }
 
   private loadFlashcards() {

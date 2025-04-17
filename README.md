@@ -1,22 +1,55 @@
 # Flashcards
 
-## TODO
-- [ ] Add a way to make new decks
-- [ ] Add a way to modify cards
-    - [ ] Add a way to create cards
-    - [ ] Add a way to delete cards
-    - [ ] Add a way to edit cards
-- [ ] Add a way to filter cards by search
-    - [ ] By tag
-    - [ ] By text
-    - [ ] By date
-    - [ ] By flag
-- [ ] Add a way to flag cards for review
-- [ ] Add algorithm for displaying cards
-- [ ] Add a way to connect cards
-- [ ] Make the UI look like cards and decks
-- [ ] Generalize loading decks
-- [ ] Add google materials for deck icons
-    - [ ] Use levenstein distance to find icon that is the closest match to the deck name
-- [ ] Add scores to decks and cards to show progress out of 100%
-- [ ] Stay logged in for longer
+## Development Plan
+
+### Tier 1: Core Functionality & Stability
+
+- [ ] Fix authentication issues (frequent logouts)
+- [ ] Fix flash cards study page display issues
+- [ ] Add basic flashcard creation and editing
+  - [ ] Add flashcard creation interface
+  - [ ] Add flashcard editing in study view
+  - [ ] Add flashcard editing in deck view
+- [ ] Improve flashcard study page UI/UX
+
+### Tier 2: Study Modes & Deck Management
+
+- [ ] Implement multiple study modes
+  - [ ] Spaced repetition
+  - [ ] Random order
+  - [ ] Sequential order
+  - [ ] Tag-based filtering
+- [ ] Add deck management features
+  - [ ] Create new decks
+  - [ ] Import decks from Google Sheets
+  - [ ] Basic deck organization
+
+### Tier 3: Advanced Features & Analytics
+
+- [ ] Add progress tracking and statistics
+  - [ ] Study session analytics
+  - [ ] Performance metrics
+  - [ ] Progress visualization
+- [ ] Implement advanced filtering
+  - [ ] Tag-based organization
+  - [ ] Search functionality
+  - [ ] Custom sorting options
+
+### Tier 4: Polish & Enhancement
+
+- [ ] UI/UX improvements
+  - [ ] Card design enhancements
+  - [ ] Deck visualization
+  - [ ] Responsive design refinements
+- [ ] Performance optimizations
+- [ ] Additional study features
+  - [ ] Card connections/linking
+  - [ ] Custom study algorithms
+  - [ ] Advanced progress tracking
+
+### Future Considerations
+
+- [ ] Mobile app development
+- [ ] Social features
+- [ ] API integration
+- [ ] Offline support

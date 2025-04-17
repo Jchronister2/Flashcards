@@ -6,6 +6,8 @@ import { Router } from '@angular/router'
 // google-auth.service.ts
 
 const CLIENT_ID = '249508522283-12oe76736pr2iknoefl5rd8li61dfbec.apps.googleusercontent.com'
+const TOKEN_KEY = 'google_token'
+const TOKEN_EXPIRY_KEY = 'google_token_expiry'
 
 @Injectable({
   providedIn: 'root',
@@ -29,7 +31,7 @@ export class GoogleAuthService {
 
     // If already authenticated, fetch user info
     if (this.isAuthenticated()) {
-      const token = localStorage.getItem('google_token')
+      const token = localStorage.getItem(TOKEN_KEY)
       if (token) {
         this.fetchUserInfo(token)
       }
@@ -42,6 +44,10 @@ export class GoogleAuthService {
       scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile',
       callback: (tokenResponse: any) => {
         if (tokenResponse && tokenResponse.access_token) {
+          // Store token expiry time (current time + expires_in seconds)
+          const expiryTime = Date.now() + (tokenResponse.expires_in * 1000)
+          localStorage.setItem(TOKEN_EXPIRY_KEY, expiryTime.toString())
+
           this.fetchUserInfo(tokenResponse.access_token).then(() => {
             this._router.navigate(['/'])
           })
@@ -56,7 +62,9 @@ export class GoogleAuthService {
 
   signIn() {
     if (this._tokenClient) {
-      this._tokenClient.requestAccessToken()
+      this._tokenClient.requestAccessToken({
+        prompt: 'consent' // This ensures we get a refresh token
+      })
     } else {
       console.error('Google API client not initialized')
     }
@@ -64,8 +72,9 @@ export class GoogleAuthService {
 
   signOut() {
     this.user$.next(null)
-    localStorage.removeItem('google_token')
-    window.google?.accounts.oauth2.revoke(localStorage.getItem('google_token') || '', () => {
+    localStorage.removeItem(TOKEN_KEY)
+    localStorage.removeItem(TOKEN_EXPIRY_KEY)
+    window.google?.accounts.oauth2.revoke(localStorage.getItem(TOKEN_KEY) || '', () => {
       this._router.navigate(['/'])
     })
   }
@@ -80,7 +89,7 @@ export class GoogleAuthService {
       })
       .then(profile => {
         this.user$.next(profile)
-        localStorage.setItem('google_token', accessToken)
+        localStorage.setItem(TOKEN_KEY, accessToken)
       })
       .catch(error => {
         console.error('Error fetching user info:', error)
@@ -89,6 +98,21 @@ export class GoogleAuthService {
   }
 
   isAuthenticated(): boolean {
-    return !!localStorage.getItem('google_token')
+    const token = localStorage.getItem(TOKEN_KEY)
+    const expiryTime = localStorage.getItem(TOKEN_EXPIRY_KEY)
+
+    if (!token || !expiryTime) return false
+
+    // Check if token is expired
+    const now = Date.now()
+    const expiry = parseInt(expiryTime, 10)
+
+    if (now >= expiry) {
+      // Token expired, try to refresh
+      this.signIn()
+      return false
+    }
+
+    return true
   }
 }

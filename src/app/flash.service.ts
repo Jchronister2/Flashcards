@@ -236,4 +236,21 @@ export class FlashService {
       }
     })
   }
+
+  createFlashcard(front: string, back: string, tags: string = '') {
+    if (!this.spreadsheetId || !this.currentDeck) return
+
+    const newFlashcard: Flashcard = {
+      front,
+      back,
+      correctCount: 0,
+      incorrectCount: 0,
+      lastCorrectDate: null,
+      tags
+    }
+
+    this._sheetsService.createFlashcard(this.spreadsheetId, this.currentDeck.name, newFlashcard).subscribe(() => {
+      this.loadFlashcards()
+    })
+  }
 }

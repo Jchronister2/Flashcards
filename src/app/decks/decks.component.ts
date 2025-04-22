@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core'
 
 import { FlashService } from '../flash.service'
-import { Flashcard } from '../google-sheets.service'
+import { Flashcard, GoogleSheetsService } from '../google-sheets.service'
 
 interface SortConfig {
     column: string
@@ -19,6 +19,15 @@ export class DecksComponent implements OnInit {
     newDeckName = ''
     activeTagFilter: string | null = null
     searchQuery: string = ''
+    showCreateModal = false
+    showEditModal = false
+    newCard = {
+        front: '',
+        back: '',
+        tags: ''
+    }
+    editCard: Flashcard | null = null
+    currentFlashcard: Flashcard | null = null
     private readonly SEARCH_THRESHOLD = 0.7 // 70% similarity threshold
 
     get decks() {
@@ -40,7 +49,10 @@ export class DecksComponent implements OnInit {
         return this.sortFlashcards(cards)
     }
 
-    constructor(private _flashService: FlashService) { }
+    constructor(
+        private _flashService: FlashService,
+        private _sheetsService: GoogleSheetsService
+    ) { }
 
     ngOnInit() {
         this._flashService.initialize()
@@ -191,5 +203,56 @@ export class DecksComponent implements OnInit {
             if (i > 0) costs[s2.length] = lastValue
         }
         return costs[s2.length]
+    }
+
+    showCreateCardModal() {
+        this.showCreateModal = true
+        this.newCard = {
+            front: '',
+            back: '',
+            tags: ''
+        }
+    }
+
+    hideCreateCardModal() {
+        this.showCreateModal = false
+    }
+
+    createCard() {
+        if (!this.newCard.front || !this.newCard.back) return
+
+        this._flashService.createFlashcard(
+            this.newCard.front,
+            this.newCard.back,
+            this.newCard.tags
+        )
+        this.hideCreateCardModal()
+    }
+
+    editFlashcard(card: Flashcard) {
+        this.currentFlashcard = card
+        this.editCard = { ...card }
+        this.showEditModal = true
+    }
+
+    saveEdit(updatedFlashcard: Flashcard) {
+        if (!this.currentFlashcard) return
+
+        const index = this.flashcards.indexOf(this.currentFlashcard)
+        this._sheetsService.updateFlashcard(
+            this._flashService.spreadsheetId!,
+            this.currentDeck!.name,
+            index,
+            updatedFlashcard
+        ).subscribe(() => {
+            this._flashService.selectDeck(this.currentDeck!.id)
+            this.hideEditModal()
+        })
+    }
+
+    hideEditModal() {
+        this.showEditModal = false
+        this.editCard = null
+        this.currentFlashcard = null
     }
 } 

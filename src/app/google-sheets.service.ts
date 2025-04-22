@@ -249,6 +249,31 @@ export class GoogleSheetsService {
     )
   }
 
+  createFlashcard(spreadsheetId: string, deckName: string, flashcard: Flashcard): Observable<any> {
+    console.log('Creating flashcard:', { deckName, flashcard })
+    const range = `${deckName}!A:F`
+    const values = [[
+      flashcard.front,
+      flashcard.back,
+      flashcard.correctCount,
+      flashcard.incorrectCount,
+      flashcard.lastCorrectDate,
+      flashcard.tags
+    ]]
+
+    return this._http.post(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${range}:append`, {
+      values,
+      majorDimension: 'ROWS'
+    }, {
+      params: {
+        valueInputOption: 'USER_ENTERED'
+      },
+      headers: this.getHeaders()
+    }).pipe(
+      tap(response => console.log('Create flashcard response:', response))
+    )
+  }
+
   getLastDeckName(): string | null {
     return localStorage.getItem(this.LAST_DECK_KEY)
   }

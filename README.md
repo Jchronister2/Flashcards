@@ -4,12 +4,14 @@
 
 ### Tier 1: Core Functionality & Stability
 
-- [x] Fix authentication issues (frequent logouts) - Completed 2024-03-21
+- [ ] Fix authentication issues (frequent logouts)
+  - [ ] Redirect to login page as soon as logout is detected
 - [ ] Fix flash cards study page display issues
 - [ ] Add basic flashcard creation and editing
-  - [ ] Add flashcard creation interface
-  - [ ] Add flashcard editing in study view
-  - [ ] Add flashcard editing in deck view
+  - [x] Add flashcard creation interface 2025-04-20
+  - [x] Add flashcard editing in study view 2025-04-20
+  - [x] Add flashcard editing in deck view 2025-04-20
+  - [ ] Add flashcard deleting in deck view
 - [ ] Improve flashcard study page UI/UX
 
 ### Tier 2: Study Modes & Deck Management

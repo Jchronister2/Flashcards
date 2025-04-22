@@ -41,12 +41,8 @@
                     <h5 class="card-title position-absolute start-50 translate-middle-x" style="font-size: 1.75rem;">
                         Front
                     </h5>
-                    <span class="material-icons ms-auto" type="button" (click)="showTagInput()">sell</span>
-
-                    <!-- Pop-up tag input box -->
-                    <div *ngIf="makingTag" class="input-popup position-absolute end-0 mt-2 p-2 border bg-white rounded">
-                        <input #tagInput type="text" class="form-control" placeholder="Enter tag name"
-                            (keydown.enter)="createTag($event)" (focusout)="makingTag = false">
+                    <div class="d-flex gap-2">
+                        <span class="material-icons" type="button" (click)="openEditModal()">edit</span>
                     </div>
                 </div>
 
@@ -99,4 +95,9 @@
             </div>
         </div>
     </div>
+
+    <!-- Edit Flashcard Modal -->
+    <app-edit-flashcard-modal [flashcard]="editCard" [isVisible]="showEditModal" (save)="saveEdit($event)"
+        (close)="hideEditModal()">
+    </app-edit-flashcard-modal>
 </div>

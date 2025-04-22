@@ -1,7 +1,7 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core'
+import { Component, OnInit } from '@angular/core'
 
 import { FlashService } from '../flash.service'
-import { Deck, Flashcard, GoogleSheetsService } from '../google-sheets.service'
+import { Flashcard, GoogleSheetsService } from '../google-sheets.service'
 
 @Component({
   selector: 'app-study',
@@ -9,10 +9,9 @@ import { Deck, Flashcard, GoogleSheetsService } from '../google-sheets.service'
   styleUrls: ['./study.component.css']
 })
 export class StudyComponent implements OnInit {
-  @ViewChild('tagInput') tagInputElement!: ElementRef
-
-  public makingTag = false
   public selectedDeckId: number | null = null
+  public showEditModal = false
+  public editCard: Flashcard | null = null
 
   get decks() {
     return this._flashService.decks
@@ -84,43 +83,34 @@ export class StudyComponent implements OnInit {
     }
   }
 
-  createTag(event: any) {
-    if (!this.currentFlashcard) return
-
-    const tagName = event.target.value.trim().toLowerCase()
-    if (tagName) {
-      this.makingTag = false
-
-      const currentTags = this.currentFlashcard.tags
-      const tagsArray = currentTags ? currentTags.split(',').map(tag => tag.trim()) : []
-
-      if (!tagsArray.includes(tagName)) {
-        tagsArray.push(tagName)
-      }
-
-      const updatedFlashcard: Flashcard = {
-        ...this.currentFlashcard,
-        tags: tagsArray.join(', ')
-      }
-
-      this.currentFlashcard[5] = tagsArray.join(', ')
-
-      const index = this.flashcards.indexOf(this.currentFlashcard)
-      this._sheetsService.updateFlashcard(
-        this._flashService.spreadsheetId!,
-        this.currentDeck!.name,
-        index,
-        updatedFlashcard
-      ).subscribe()
-    }
-  }
-
-  showTagInput() {
-    this.makingTag = true
-    setTimeout(() => this.tagInputElement.nativeElement.focus(), 0)
-  }
-
   submitAnswer() {
     this._flashService.submitAnswer()
+    this.answer = ''
+  }
+
+  openEditModal() {
+    if (!this.currentFlashcard) return
+    this.showEditModal = true
+    this.editCard = { ...this.currentFlashcard }
+  }
+
+  hideEditModal() {
+    this.showEditModal = false
+    this.editCard = null
+  }
+
+  saveEdit(updatedFlashcard: Flashcard) {
+    if (!this.currentFlashcard) return
+
+    const index = this.flashcards.indexOf(this.currentFlashcard)
+    this._sheetsService.updateFlashcard(
+      this._flashService.spreadsheetId!,
+      this.currentDeck!.name,
+      index,
+      updatedFlashcard
+    ).subscribe(() => {
+      this._flashService.selectDeck(this.currentDeck!.id)
+      this.hideEditModal()
+    })
   }
 }

@@ -1,28 +1,31 @@
 import { HttpClientModule } from '@angular/common/http'
 import { NgModule } from '@angular/core'
-import { FormsModule } from '@angular/forms'
+import { FormsModule, ReactiveFormsModule } from '@angular/forms'
 import { BrowserModule } from '@angular/platform-browser'
+import { RouterModule } from '@angular/router'
 
 import { AppRoutingModule } from './app-routing.module'
 import { AppComponent } from './app.component'
 import { DecksComponent } from './decks/decks.component'
-import { LoginComponent } from './login/login.component'
+import { EditFlashcardModalComponent } from './edit-flashcard-modal/edit-flashcard-modal.component'
 import { ProfileComponent } from './profile/profile.component'
 import { StudyComponent } from './study/study.component'
 
 @NgModule({
   declarations: [
     AppComponent,
-    StudyComponent,
-    LoginComponent,
+    DecksComponent,
+    EditFlashcardModalComponent,
     ProfileComponent,
-    DecksComponent
+    StudyComponent
   ],
   imports: [
-    BrowserModule,
     AppRoutingModule,
+    BrowserModule,
+    FormsModule,
     HttpClientModule,
-    FormsModule
+    ReactiveFormsModule,
+    RouterModule,
   ],
   providers: [],
   bootstrap: [AppComponent]

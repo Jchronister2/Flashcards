@@ -21,6 +21,9 @@ export class DecksComponent implements OnInit {
     searchQuery: string = ''
     showCreateModal = false
     showEditModal = false
+    showDeleteModal = false
+    dontAskAgain = false
+    cardToDelete: Flashcard | null = null
     newCard = {
         front: '',
         back: '',
@@ -233,6 +236,40 @@ export class DecksComponent implements OnInit {
         this.currentFlashcard = card
         this.editCard = { ...card }
         this.showEditModal = true
+    }
+
+    deleteFlashcard(card: Flashcard) {
+        if (!this.currentDeck || !this._flashService.spreadsheetId) return
+
+        if (this.dontAskAgain) {
+            this.performDelete(card)
+        } else {
+            this.cardToDelete = card
+            this.showDeleteModal = true
+        }
+    }
+
+    confirmDelete() {
+        if (this.cardToDelete) {
+            this.performDelete(this.cardToDelete)
+            this.hideDeleteModal()
+        }
+    }
+
+    private performDelete(card: Flashcard) {
+        const index = this.flashcards.indexOf(card)
+        this._sheetsService.deleteFlashcard(
+            this._flashService.spreadsheetId!,
+            this.currentDeck!.name,
+            index
+        ).subscribe(() => {
+            this._flashService.selectDeck(this.currentDeck!.id)
+        })
+    }
+
+    hideDeleteModal() {
+        this.showDeleteModal = false
+        this.cardToDelete = null
     }
 
     saveEdit(updatedFlashcard: Flashcard) {

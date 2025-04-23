@@ -356,3 +356,63 @@ th:hover .sort-icon {
     justify-content: flex-end;
     gap: 8px;
 }
+
+.warning-text {
+    color: #dc3545;
+    font-weight: 500;
+    margin-top: 8px;
+}
+
+.form-check {
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.form-check-input {
+    margin: 0;
+}
+
+.form-check-label {
+    user-select: none;
+    cursor: pointer;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    border-color: #dc3545;
+}
+
+.btn-danger:hover {
+    background-color: #c82333;
+    border-color: #bd2130;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    border-radius: 0.2rem;
+}
+
+.btn-outline-primary,
+.btn-outline-danger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 32px;
+    padding: 0;
+}
+
+.btn-outline-primary .material-icons,
+.btn-outline-danger .material-icons {
+    font-size: 18px;
+}

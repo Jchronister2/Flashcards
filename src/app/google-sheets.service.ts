@@ -25,6 +25,7 @@ export class GoogleSheetsService {
   private readonly APP_NAME = 'Flashcards'
   private readonly SPREADSHEET_ID_KEY = 'flashcards_spreadsheet_id'
   private readonly LAST_DECK_KEY = 'flashcards_last_deck'
+  private readonly API_URL = 'https://sheets.googleapis.com/v4/spreadsheets'
 
   constructor(private _http: HttpClient) {
     console.log('GoogleSheetsService initialized')
@@ -204,6 +205,36 @@ export class GoogleSheetsService {
     )
   }
 
+  deleteFlashcard(spreadsheetId: string, deckName: string, index: number): Observable<any> {
+    console.log('Deleting flashcard:', { deckName, index })
+    return this._http.get(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}`, {
+      headers: this.getHeaders()
+    }).pipe(
+      switchMap(response => {
+        const sheet = (response as any).sheets.find((s: any) => s.properties.title === deckName)
+        if (!sheet) {
+          throw new Error(`Sheet ${deckName} not found`)
+        }
+        const sheetId = sheet.properties.sheetId
+        return this._http.post(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`, {
+          requests: [{
+            deleteDimension: {
+              range: {
+                sheetId,
+                dimension: 'ROWS',
+                startIndex: index + 1, // +1 because the first row is headers
+                endIndex: index + 2
+              }
+            }
+          }]
+        }, {
+          headers: this.getHeaders()
+        })
+      }),
+      tap(response => console.log('Delete response:', response))
+    )
+  }
+
   createDeck(spreadsheetId: string, name: string): Observable<Deck> {
     console.log('Creating new deck:', name)
     return this._http.post(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`, {
@@ -249,9 +280,9 @@ export class GoogleSheetsService {
     )
   }
 
-  createFlashcard(spreadsheetId: string, deckName: string, flashcard: Flashcard): Observable<any> {
-    console.log('Creating flashcard:', { deckName, flashcard })
-    const range = `${deckName}!A:F`
+  createFlashcard(spreadsheetId: string, sheetName: string, flashcard: Flashcard): Observable<any> {
+    console.log('Creating flashcard:', { sheetName, flashcard })
+    const range = `${sheetName}!A:F`
     const values = [[
       flashcard.front,
       flashcard.back,

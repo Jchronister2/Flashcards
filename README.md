@@ -7,11 +7,11 @@
 - [ ] Fix authentication issues (frequent logouts)
   - [ ] Redirect to login page as soon as logout is detected
 - [ ] Fix flash cards study page display issues
-- [ ] Add basic flashcard creation and editing
-  - [x] Add flashcard creation interface 2025-04-20
-  - [x] Add flashcard editing in study view 2025-04-20
-  - [x] Add flashcard editing in deck view 2025-04-20
-  - [ ] Add flashcard deleting in deck view
+- [x] Add basic flashcard creation and editing - 04-22-2025
+  - [x] Add flashcard creation interface
+  - [x] Add flashcard editing in study view
+  - [x] Add flashcard editing in deck view
+  - [x] Add flashcard deleting in deck view
 - [ ] Improve flashcard study page UI/UX
 
 ### Tier 2: Study Modes & Deck Management

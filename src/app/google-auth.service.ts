@@ -15,6 +15,7 @@ const TOKEN_EXPIRY_KEY = 'google_token_expiry'
 export class GoogleAuthService {
   private _tokenClient: any
   public user$ = new BehaviorSubject<any | null>(null)
+  private _lastRoute: string | null = null
 
   constructor(private _router: Router) {
     // Wait for Google API to be ready
@@ -36,6 +37,20 @@ export class GoogleAuthService {
         this.fetchUserInfo(token)
       }
     }
+
+    // Check token expiration periodically
+    setInterval(() => this.checkTokenExpiration(), 60000) // Check every minute
+  }
+
+  private checkTokenExpiration() {
+    if (this.isAuthenticated()) {
+      const token = localStorage.getItem(TOKEN_KEY)
+      if (token) {
+        this.fetchUserInfo(token).catch(() => {
+          this.signOut()
+        })
+      }
+    }
   }
 
   initializeClient() {
@@ -49,7 +64,12 @@ export class GoogleAuthService {
           localStorage.setItem(TOKEN_EXPIRY_KEY, expiryTime.toString())
 
           this.fetchUserInfo(tokenResponse.access_token).then(() => {
-            this._router.navigate(['/'])
+            if (this._lastRoute) {
+              this._router.navigate([this._lastRoute])
+              this._lastRoute = null
+            } else {
+              this._router.navigate(['/'])
+            }
           })
         }
       },
@@ -63,7 +83,7 @@ export class GoogleAuthService {
   signIn() {
     if (this._tokenClient) {
       this._tokenClient.requestAccessToken({
-        prompt: 'consent' // This ensures we get a refresh token
+        prompt: 'consent'
       })
     } else {
       console.error('Google API client not initialized')
@@ -71,11 +91,15 @@ export class GoogleAuthService {
   }
 
   signOut() {
+    // Store the current route before signing out
+    if (this._router.url !== '/login') {
+      this._lastRoute = this._router.url
+    }
     this.user$.next(null)
     localStorage.removeItem(TOKEN_KEY)
     localStorage.removeItem(TOKEN_EXPIRY_KEY)
     window.google?.accounts.oauth2.revoke(localStorage.getItem(TOKEN_KEY) || '', () => {
-      this._router.navigate(['/'])
+      this._router.navigate(['/login'])
     })
   }
 
@@ -103,13 +127,10 @@ export class GoogleAuthService {
 
     if (!token || !expiryTime) return false
 
-    // Check if token is expired
     const now = Date.now()
     const expiry = parseInt(expiryTime, 10)
 
     if (now >= expiry) {
-      // Token expired, try to refresh
-      this.signIn()
       return false
     }
 

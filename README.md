@@ -5,7 +5,7 @@
 ### Tier 1: Core Functionality & Stability
 
 - [ ] Fix authentication issues (frequent logouts)
-  - [ ] Redirect to login page as soon as logout is detected
+  - [x] Redirect to login page as soon as logout is detected - 04-26-2025
 - [ ] Fix flash cards study page display issues
 - [x] Add basic flashcard creation and editing - 04-22-2025
   - [x] Add flashcard creation interface

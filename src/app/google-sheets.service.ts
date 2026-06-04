@@ -37,6 +37,8 @@ export class GoogleSheetsService {
   }
 
   getUserSpreadsheet(): Observable<string> {
+    if (this.isPreviewMode()) return of('preview-spreadsheet')
+
     console.log('Getting user spreadsheet...')
     const storedId = localStorage.getItem(this.SPREADSHEET_ID_KEY)
     if (storedId) {
@@ -142,6 +144,14 @@ export class GoogleSheetsService {
   }
 
   getDecks(spreadsheetId: string): Observable<Deck[]> {
+    if (this.isPreviewMode()) {
+      return of([
+        { id: 1, name: 'Japanese' },
+        { id: 2, name: 'Hiragana' },
+        { id: 3, name: 'Vocabulary' }
+      ])
+    }
+
     console.log('Getting decks for spreadsheet:', spreadsheetId)
     return this._http.get(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}`, {
       headers: this.getHeaders()
@@ -159,6 +169,17 @@ export class GoogleSheetsService {
   }
 
   getFlashcards(spreadsheetId: string, deckName: string): Observable<Flashcard[]> {
+    if (this.isPreviewMode()) {
+      return of([
+        { front: 'turn', back: 'mawaru', correctCount: 8, incorrectCount: 2, lastCorrectDate: new Date().toISOString(), tags: 'verb' },
+        { front: '行く', back: 'to go', correctCount: 7, incorrectCount: 3, lastCorrectDate: null, tags: 'verb' },
+        { front: '食べる', back: 'to eat', correctCount: 11, incorrectCount: 1, lastCorrectDate: new Date().toISOString(), tags: 'verb' },
+        { front: '見る', back: 'to see', correctCount: 4, incorrectCount: 2, lastCorrectDate: null, tags: 'verb' },
+        { front: '来る', back: 'to come', correctCount: 6, incorrectCount: 3, lastCorrectDate: null, tags: 'verb' },
+        { front: 'する', back: 'to do', correctCount: 9, incorrectCount: 2, lastCorrectDate: new Date().toISOString(), tags: 'verb' }
+      ])
+    }
+
     console.log('Getting flashcards for deck:', deckName)
     return this._http.get(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${deckName}!A2:F`, {
       headers: this.getHeaders()
@@ -181,6 +202,8 @@ export class GoogleSheetsService {
   }
 
   updateFlashcard(spreadsheetId: string, deckName: string, index: number, flashcard: Flashcard): Observable<any> {
+    if (this.isPreviewMode()) return of({})
+
     console.log('Updating flashcard:', { deckName, index, flashcard })
     const range = `${deckName}!A${index + 2}:F${index + 2}`
     const values = [[
@@ -206,6 +229,8 @@ export class GoogleSheetsService {
   }
 
   deleteFlashcard(spreadsheetId: string, deckName: string, index: number): Observable<any> {
+    if (this.isPreviewMode()) return of({})
+
     console.log('Deleting flashcard:', { deckName, index })
     return this._http.get(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}`, {
       headers: this.getHeaders()
@@ -236,6 +261,8 @@ export class GoogleSheetsService {
   }
 
   createDeck(spreadsheetId: string, name: string): Observable<Deck> {
+    if (this.isPreviewMode()) return of({ id: Date.now(), name })
+
     console.log('Creating new deck:', name)
     return this._http.post(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`, {
       requests: [{
@@ -262,6 +289,8 @@ export class GoogleSheetsService {
   }
 
   renameDeck(spreadsheetId: string, deckId: number, newName: string): Observable<any> {
+    if (this.isPreviewMode()) return of({})
+
     console.log('Renaming deck:', { deckId, newName })
     return this._http.post(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`, {
       requests: [{
@@ -281,6 +310,8 @@ export class GoogleSheetsService {
   }
 
   createFlashcard(spreadsheetId: string, sheetName: string, flashcard: Flashcard): Observable<any> {
+    if (this.isPreviewMode()) return of({})
+
     console.log('Creating flashcard:', { sheetName, flashcard })
     const range = `${sheetName}!A:F`
     const values = [[
@@ -311,5 +342,10 @@ export class GoogleSheetsService {
 
   setLastDeckName(name: string): void {
     localStorage.setItem(this.LAST_DECK_KEY, name)
+  }
+
+  private isPreviewMode(): boolean {
+    return ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname)
+      && localStorage.getItem('google_token') === 'dev-preview-token'
   }
 }

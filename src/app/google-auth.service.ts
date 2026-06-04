@@ -8,6 +8,7 @@ import { Router } from '@angular/router'
 const CLIENT_ID = '249508522283-12oe76736pr2iknoefl5rd8li61dfbec.apps.googleusercontent.com'
 const TOKEN_KEY = 'google_token'
 const TOKEN_EXPIRY_KEY = 'google_token_expiry'
+const PREVIEW_TOKEN = 'dev-preview-token'
 
 @Injectable({
   providedIn: 'root',
@@ -18,6 +19,8 @@ export class GoogleAuthService {
   private _lastRoute: string | null = null
 
   constructor(private _router: Router) {
+    this.importTokenFromUrlFragment()
+
     // Wait for Google API to be ready
     if (window.google) {
       this.initializeClient()
@@ -42,9 +45,69 @@ export class GoogleAuthService {
     setInterval(() => this.checkTokenExpiration(), 60000) // Check every minute
   }
 
+  private importTokenFromUrlFragment() {
+    if (!this.isLocalDevOrigin() || !window.location.hash) return
+
+    const params = new URLSearchParams(window.location.hash.substring(1))
+    const token = params.get('flashcards_token')
+    const expiry = params.get('flashcards_expiry')
+
+    if (!token || !expiry) return
+
+    localStorage.setItem(TOKEN_KEY, token)
+    localStorage.setItem(TOKEN_EXPIRY_KEY, expiry)
+    window.history.replaceState(null, document.title, window.location.pathname + window.location.search)
+
+    if (this.isPreviewToken(token)) {
+      this.user$.next(this.getPreviewUser())
+      this._router.navigate(['/'])
+      return
+    }
+
+    this.fetchUserInfo(token).then(() => {
+      this._router.navigate(['/'])
+    })
+  }
+
+  private isLocalDevOrigin(): boolean {
+    return ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname)
+  }
+
+  private isPreviewToken(token: string): boolean {
+    return this.isLocalDevOrigin() && token === PREVIEW_TOKEN
+  }
+
+  private getPreviewUser() {
+    return {
+      name: 'Tyler Loe',
+      email: 'preview@flashcards.local',
+      picture: 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y'
+    }
+  }
+
+  createCodexPreviewLoginUrl(): string | null {
+    if (!this.isLocalDevOrigin()) return null
+
+    const token = localStorage.getItem(TOKEN_KEY)
+    const expiry = localStorage.getItem(TOKEN_EXPIRY_KEY)
+
+    if (!token || !expiry) return null
+
+    const params = new URLSearchParams({
+      flashcards_token: token,
+      flashcards_expiry: expiry,
+    })
+
+    return `${window.location.origin}/login#${params.toString()}`
+  }
+
   private checkTokenExpiration() {
     if (this.isAuthenticated()) {
       const token = localStorage.getItem(TOKEN_KEY)
+      if (token && this.isPreviewToken(token)) {
+        this.user$.next(this.getPreviewUser())
+        return
+      }
       if (token) {
         this.fetchUserInfo(token).catch(() => {
           this.signOut()
@@ -104,6 +167,11 @@ export class GoogleAuthService {
   }
 
   fetchUserInfo(accessToken: string) {
+    if (this.isPreviewToken(accessToken)) {
+      this.user$.next(this.getPreviewUser())
+      return Promise.resolve(this.getPreviewUser())
+    }
+
     return fetch('https://www.googleapis.com/oauth2/v1/userinfo?alt=json&access_token=' + accessToken)
       .then(response => {
         if (!response.ok) {

@@ -10,8 +10,10 @@ import { GoogleAuthService } from '../google-auth.service'
 })
 export class ProfileComponent {
     isMenuOpen = false
+    copyStatus = ''
 
     get user() { return this._authService.user$.getValue() }
+    get canCopyCodexLoginLink() { return location.hostname === 'localhost' }
 
     constructor(
         private _authService: GoogleAuthService,
@@ -29,6 +31,19 @@ export class ProfileComponent {
     onLogout() {
         this._authService.signOut()
         this._router.navigate(['/login'])
+    }
+
+    async copyCodexLoginLink() {
+        const url = this._authService.createCodexPreviewLoginUrl()
+        if (!url) return
+
+        try {
+            await navigator.clipboard.writeText(url)
+            this.copyStatus = 'Copied'
+        } catch {
+            window.prompt('Copy this URL into Codex preview:', url)
+            this.copyStatus = 'Ready'
+        }
     }
 
     handleImageError(event: Event) {

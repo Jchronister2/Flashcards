@@ -1,0 +1,21 @@
+// Custom color overrides
+$primary: #003366; // Navy Blue
+$secondary: #2C3E50; // Slate Gray
+$danger: #D32F2F; // Crimson Red
+$light: #F5F5F5; // Off-White
+$warning: #FFD700; // Goldenrod
+
+// Import Bootstrap after overriding variables
+@use "bootstrap/scss/bootstrap";
+
+// Global styles
+body {
+    background-color: var(--bs-light);
+    margin: 0;
+    padding: 0;
+}
+
+app-root {
+    display: block;
+    min-height: 100vh;
+}

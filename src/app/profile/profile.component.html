@@ -1,0 +1,24 @@
+<div class="profile-container" (clickOutside)="closeMenu()">
+    <div class="profile-button" (click)="toggleMenu()">
+        <img [src]="user?.picture" alt="Profile Picture" (error)="handleImageError($event)" class="profile-image">
+        <span class="material-icons expand-icon" [class.open]="isMenuOpen">
+            expand_more
+        </span>
+    </div>
+
+    <div class="profile-menu" *ngIf="isMenuOpen">
+        <div class="menu-header">
+            <img [src]="user?.picture" alt="Profile Picture" (error)="handleImageError($event)"
+                class="menu-profile-image">
+            <div class="user-info">
+                <div class="user-name">{{ user?.name }}</div>
+                <div class="user-email">{{ user?.email }}</div>
+            </div>
+        </div>
+        <div class="menu-divider"></div>
+        <button class="logout-button" (click)="onLogout()">
+            <span class="material-icons">logout</span>
+            Sign out
+        </button>
+    </div>
+</div>

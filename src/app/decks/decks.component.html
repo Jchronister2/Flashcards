@@ -1,0 +1,197 @@
+<div class="decks-container">
+    <!-- Decks List -->
+    <div class="deck-list">
+        <h2>Your Decks</h2>
+        <div class="deck-buttons">
+            <button class="deck-button" *ngFor="let deck of decks" [class.active]="deck.id === currentDeck?.id"
+                (click)="onDeckSelect(deck.id)">
+                <span class="material-icons">style</span>
+                <ng-container *ngIf="isEditingDeckName && deck.id === currentDeck?.id">
+                    <input #deckNameInput [(ngModel)]="newDeckName" (keyup.enter)="saveDeckName()"
+                        (keyup.escape)="cancelEditingDeckName()" (blur)="saveDeckName()" class="deck-name-input"
+                        [attr.size]="newDeckName.length" autofocus>
+                </ng-container>
+                <ng-container *ngIf="!(isEditingDeckName && deck.id === currentDeck?.id)">
+                    <span (dblclick)="startEditingDeckName()">{{ deck.name }}</span>
+                </ng-container>
+            </button>
+        </div>
+    </div>
+
+    <!-- Flashcards Table -->
+    <div class="flashcards-table" *ngIf="currentDeck">
+        <div class="table-header">
+            <div class="header-left">
+                <h3>{{ currentDeck.name }}</h3>
+                <div class="search-container">
+                    <span class="material-icons">search</span>
+                    <input type="text" [(ngModel)]="searchQuery" (ngModelChange)="onSearch()"
+                        placeholder="Search cards..." class="search-input">
+                </div>
+            </div>
+            <div class="header-right">
+                <button class="btn btn-primary create-card-btn" (click)="showCreateCardModal()">
+                    <span class="material-icons">add</span>
+                    Create Card
+                </button>
+                <div class="active-filter" *ngIf="activeTagFilter">
+                    <span class="filter-tag">
+                        Showing cards with tag: {{ activeTagFilter }}
+                        <button class="clear-filter" (click)="clearTagFilter()">
+                            <span class="material-icons">close</span>
+                        </button>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Create Card Modal -->
+        <div class="modal" *ngIf="showCreateModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4>Create New Flashcard</h4>
+                    <button class="close-btn" (click)="hideCreateCardModal()">
+                        <span class="material-icons">close</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="front">Front</label>
+                        <textarea id="front" [(ngModel)]="newCard.front" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="back">Back</label>
+                        <textarea id="back" [(ngModel)]="newCard.back" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="tags">Tags (comma-separated)</label>
+                        <input type="text" id="tags" [(ngModel)]="newCard.tags" class="form-control">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" (click)="hideCreateCardModal()">Cancel</button>
+                    <button class="btn btn-primary" (click)="createCard()"
+                        [disabled]="!newCard.front || !newCard.back">Create</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table Content -->
+        <div *ngIf="flashcards.length > 0">
+            <table>
+                <thead>
+                    <tr>
+                        <th (click)="toggleSort('front')">
+                            Front
+                            <span class="material-icons sort-icon" *ngIf="sortConfig.column === 'front'">
+                                {{ sortConfig.direction === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
+                            </span>
+                        </th>
+                        <th (click)="toggleSort('back')">
+                            Back
+                            <span class="material-icons sort-icon" *ngIf="sortConfig.column === 'back'">
+                                {{ sortConfig.direction === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
+                            </span>
+                        </th>
+                        <th (click)="toggleSort('correct')">
+                            Correct
+                            <span class="material-icons sort-icon" *ngIf="sortConfig.column === 'correct'">
+                                {{ sortConfig.direction === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
+                            </span>
+                        </th>
+                        <th (click)="toggleSort('incorrect')">
+                            Incorrect
+                            <span class="material-icons sort-icon" *ngIf="sortConfig.column === 'incorrect'">
+                                {{ sortConfig.direction === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
+                            </span>
+                        </th>
+                        <th (click)="toggleSort('lastCorrect')">
+                            Last Correct
+                            <span class="material-icons sort-icon" *ngIf="sortConfig.column === 'lastCorrect'">
+                                {{ sortConfig.direction === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
+                            </span>
+                        </th>
+                        <th (click)="toggleSort('tags')">
+                            Tags
+                            <span class="material-icons sort-icon" *ngIf="sortConfig.column === 'tags'">
+                                {{ sortConfig.direction === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
+                            </span>
+                        </th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let card of flashcards">
+                        <td>{{ card.front }}</td>
+                        <td>{{ card.back }}</td>
+                        <td>{{ card.correctCount }}</td>
+                        <td>{{ card.incorrectCount }}</td>
+                        <td>{{ card.lastCorrectDate | date }}</td>
+                        <td>
+                            <div class="tags-container">
+                                <span class="tag" *ngFor="let tag of getTags(card.tags)" (click)="onTagClick(tag)"
+                                    [class.active]="tag === activeTagFilter">
+                                    {{ tag }}
+                                </span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="action-buttons">
+                                <button class="btn btn-sm btn-outline-primary" (click)="editFlashcard(card)">
+                                    <span class="material-icons">edit</span>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" (click)="deleteFlashcard(card)">
+                                    <span class="material-icons">delete</span>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state" *ngIf="flashcards.length === 0">
+            <span class="material-icons">search_off</span>
+            <p>No cards found matching your search</p>
+            <button class="clear-filters" (click)="clearFilters()">
+                Clear all filters
+            </button>
+        </div>
+    </div>
+
+    <!-- Initial Empty State -->
+    <div class="empty-state" *ngIf="!currentDeck">
+        <span class="material-icons">style</span>
+        <p>Select a deck to view flashcards</p>
+    </div>
+
+    <!-- Edit Flashcard Modal -->
+    <app-edit-flashcard-modal [flashcard]="editCard" [isVisible]="showEditModal" (save)="saveEdit($event)"
+        (close)="hideEditModal()">
+    </app-edit-flashcard-modal>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal" *ngIf="showDeleteModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4>Delete Flashcard</h4>
+                <button class="close-btn" (click)="hideDeleteModal()">
+                    <span class="material-icons">close</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this flashcard?</p>
+                <p class="warning-text">This action cannot be undone.</p>
+                <div class="form-check">
+                    <input type="checkbox" class="form-check-input" id="dontAskAgain" [(ngModel)]="dontAskAgain">
+                    <label class="form-check-label" for="dontAskAgain">Don't ask me again</label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" (click)="hideDeleteModal()">Cancel</button>
+                <button class="btn btn-danger" (click)="confirmDelete()">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>

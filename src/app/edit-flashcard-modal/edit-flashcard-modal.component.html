@@ -1,0 +1,29 @@
+<div class="modal" *ngIf="isVisible">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h4>Edit Flashcard</h4>
+            <button class="close-btn" (click)="onClose()">
+                <span class="material-icons">close</span>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="editFront">Front</label>
+                <textarea id="editFront" [(ngModel)]="editedFlashcard.front" class="form-control" rows="3"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="editBack">Back</label>
+                <textarea id="editBack" [(ngModel)]="editedFlashcard.back" class="form-control" rows="3"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="editTags">Tags (comma-separated)</label>
+                <input type="text" id="editTags" [(ngModel)]="editedFlashcard.tags" class="form-control">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" (click)="onClose()">Cancel</button>
+            <button class="btn btn-primary" (click)="onSave()"
+                [disabled]="!editedFlashcard?.front || !editedFlashcard?.back">Save</button>
+        </div>
+    </div>
+</div>

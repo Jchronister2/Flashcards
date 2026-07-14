@@ -1,0 +1,15 @@
+<!-- app.component.html -->
+<div class="container-fluid min-vh-100 bg-light p-0">
+    <div *ngIf="isAuthenticated" class="app-container">
+        <div class="app-header">
+            <h1>Flashcards</h1>
+            <div class="nav-buttons">
+                <button routerLink="/decks" routerLinkActive="active">Decks</button>
+                <button routerLink="/study" routerLinkActive="active">Study</button>
+            </div>
+            <app-profile></app-profile>
+        </div>
+    </div>
+
+    <router-outlet></router-outlet>
+</div>

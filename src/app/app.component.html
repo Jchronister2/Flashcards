@@ -7,7 +7,14 @@
                 <button routerLink="/decks" routerLinkActive="active">Decks</button>
                 <button routerLink="/study" routerLinkActive="active">Study</button>
             </div>
-            <app-profile></app-profile>
+            <div *ngIf="isDemoMode" class="demo-actions">
+                <span class="demo-badge">Demo data</span>
+                <button class="reset-demo-button" type="button" title="Reset demo data" (click)="onResetDemoData()">
+                    <span class="material-icons" aria-hidden="true">restart_alt</span>
+                    <span class="visually-hidden">Reset demo data</span>
+                </button>
+            </div>
+            <app-profile *ngIf="!isDemoMode"></app-profile>
         </div>
     </div>
 

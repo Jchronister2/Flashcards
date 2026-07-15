@@ -4,6 +4,9 @@ import { catchError, map, switchMap, tap } from 'rxjs/operators'
 import { HttpClient, HttpHeaders } from '@angular/common/http'
 import { Injectable } from '@angular/core'
 
+import { DemoFlashcardStore } from './demo-flashcard-store'
+import { RuntimeConfigService } from './runtime-config.service'
+
 export interface Deck {
   id: number
   name: string
@@ -27,8 +30,16 @@ export class GoogleSheetsService {
   private readonly LAST_DECK_KEY = 'flashcards_last_deck'
   private readonly API_URL = 'https://sheets.googleapis.com/v4/spreadsheets'
 
-  constructor(private _http: HttpClient) {
+  constructor(
+    private _http: HttpClient,
+    private _runtimeConfig: RuntimeConfigService,
+    private _demoStore: DemoFlashcardStore
+  ) {
     console.log('GoogleSheetsService initialized')
+  }
+
+  get isDemoMode(): boolean {
+    return this._runtimeConfig.isDemoMode
   }
 
   private getHeaders(): HttpHeaders {
@@ -37,6 +48,8 @@ export class GoogleSheetsService {
   }
 
   getUserSpreadsheet(): Observable<string> {
+    if (this.isDemoMode) return of('demo-spreadsheet')
+
     console.log('Getting user spreadsheet...')
     const storedId = localStorage.getItem(this.SPREADSHEET_ID_KEY)
     if (storedId) {
@@ -142,6 +155,8 @@ export class GoogleSheetsService {
   }
 
   getDecks(spreadsheetId: string): Observable<Deck[]> {
+    if (this.isDemoMode) return of(this._demoStore.getDecks())
+
     console.log('Getting decks for spreadsheet:', spreadsheetId)
     return this._http.get(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}`, {
       headers: this.getHeaders()
@@ -159,6 +174,8 @@ export class GoogleSheetsService {
   }
 
   getFlashcards(spreadsheetId: string, deckName: string): Observable<Flashcard[]> {
+    if (this.isDemoMode) return of(this._demoStore.getFlashcards(deckName))
+
     console.log('Getting flashcards for deck:', deckName)
     return this._http.get(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${deckName}!A2:F`, {
       headers: this.getHeaders()
@@ -181,6 +198,11 @@ export class GoogleSheetsService {
   }
 
   updateFlashcard(spreadsheetId: string, deckName: string, index: number, flashcard: Flashcard): Observable<any> {
+    if (this.isDemoMode) {
+      this._demoStore.updateFlashcard(deckName, index, flashcard)
+      return of(null)
+    }
+
     console.log('Updating flashcard:', { deckName, index, flashcard })
     const range = `${deckName}!A${index + 2}:F${index + 2}`
     const values = [[
@@ -206,6 +228,11 @@ export class GoogleSheetsService {
   }
 
   deleteFlashcard(spreadsheetId: string, deckName: string, index: number): Observable<any> {
+    if (this.isDemoMode) {
+      this._demoStore.deleteFlashcard(deckName, index)
+      return of(null)
+    }
+
     console.log('Deleting flashcard:', { deckName, index })
     return this._http.get(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}`, {
       headers: this.getHeaders()
@@ -236,6 +263,8 @@ export class GoogleSheetsService {
   }
 
   createDeck(spreadsheetId: string, name: string): Observable<Deck> {
+    if (this.isDemoMode) return of(this._demoStore.createDeck(name))
+
     console.log('Creating new deck:', name)
     return this._http.post(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`, {
       requests: [{
@@ -262,6 +291,11 @@ export class GoogleSheetsService {
   }
 
   renameDeck(spreadsheetId: string, deckId: number, newName: string): Observable<any> {
+    if (this.isDemoMode) {
+      this._demoStore.renameDeck(deckId, newName)
+      return of(null)
+    }
+
     console.log('Renaming deck:', { deckId, newName })
     return this._http.post(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`, {
       requests: [{
@@ -281,6 +315,11 @@ export class GoogleSheetsService {
   }
 
   createFlashcard(spreadsheetId: string, sheetName: string, flashcard: Flashcard): Observable<any> {
+    if (this.isDemoMode) {
+      this._demoStore.createFlashcard(sheetName, flashcard)
+      return of(null)
+    }
+
     console.log('Creating flashcard:', { sheetName, flashcard })
     const range = `${sheetName}!A:F`
     const values = [[
@@ -311,5 +350,9 @@ export class GoogleSheetsService {
 
   setLastDeckName(name: string): void {
     localStorage.setItem(this.LAST_DECK_KEY, name)
+  }
+
+  resetDemoData(): void {
+    if (this.isDemoMode) this._demoStore.reset()
   }
 }

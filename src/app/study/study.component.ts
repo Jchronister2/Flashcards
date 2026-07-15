@@ -10,7 +10,6 @@ import { Flashcard, GoogleSheetsService } from '../google-sheets.service'
     standalone: false
 })
 export class StudyComponent implements OnInit {
-  public selectedDeckId: number | null = null
   public showEditModal = false
   public editCard: Flashcard | null = null
 
@@ -62,25 +61,12 @@ export class StudyComponent implements OnInit {
 
   ngOnInit() {
     this._flashService.initialize()
-
-    // Try to get the last selected deck first
-    const lastSelectedDeckId = this._flashService.getLastSelectedDeckId()
-    if (lastSelectedDeckId) {
-      this.selectedDeckId = lastSelectedDeckId
-      this._flashService.selectDeck(lastSelectedDeckId)
-    } else if (this.currentDeck) {
-      // Fallback to current deck if no last selected
-      this.selectedDeckId = this.currentDeck.id
-    } else if (this.decks.length > 0) {
-      // If no last selected and no current deck, select the first deck
-      this.selectedDeckId = this.decks[0].id
-      this._flashService.selectDeck(this.decks[0].id)
-    }
   }
 
-  onDeckChange() {
-    if (this.selectedDeckId && this.selectedDeckId !== this.currentDeck?.id) {
-      this._flashService.selectDeck(this.selectedDeckId)
+  onDeckChange(deckId: number | string) {
+    const parsedDeckId = Number(deckId)
+    if (parsedDeckId && parsedDeckId !== this.currentDeck?.id) {
+      this._flashService.selectDeck(parsedDeckId)
     }
   }
 

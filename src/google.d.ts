@@ -31,5 +31,6 @@ declare namespace google {
 interface Window {
     flashcardsConfig?: {
         googleClientId?: string;
+        demoMode?: boolean;
     };
 }

@@ -1,6 +1,10 @@
 # Flashcards
 
-An Angular study app that stores decks in a Google Sheet owned by the signed-in user. It supports deck management, card editing, free-response study sessions, answer tracking, tags, and per-card performance history.
+An Angular study app for deck management, card editing, free-response study sessions, answer tracking, tags, and per-card performance history.
+
+**[Open the public demo](https://jchronister2.github.io/Flashcards/)**
+
+The public demo uses sample decks stored only in your browser. A self-hosted deployment can instead store decks in a Google Sheet owned by the signed-in user.
 
 ## Features
 
@@ -10,9 +14,23 @@ An Angular study app that stores decks in a Google Sheet owned by the signed-in 
 - Remembers the most recently selected deck.
 - Keeps the user's spreadsheet in their own Google Drive.
 
+## Screenshots
+
+The screenshots below use the public demo data. The reset button restores the original sample decks.
+
+### Study session
+
+![Free-response study session](docs/screenshots/study-session.png)
+
+### Deck manager
+
+![Deck and card management](docs/screenshots/deck-manager.png)
+
 ## Privacy
 
-The application has no project-operated backend. OAuth tokens stay in browser local storage, and flashcards are written directly to a Google Sheet in the signed-in user's Drive. Do not use the app on a shared browser profile.
+The application has no project-operated backend. The public demo does not load Google OAuth or call Google APIs. Its sample data and changes remain in browser local storage.
+
+In a configured self-hosted deployment, OAuth tokens stay in browser local storage and flashcards are written directly to a Google Sheet in the signed-in user's Drive. Do not use authenticated mode on a shared browser profile.
 
 ## Google OAuth setup
 

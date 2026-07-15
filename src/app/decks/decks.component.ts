@@ -258,7 +258,7 @@ export class DecksComponent implements OnInit {
     }
 
     private performDelete(card: Flashcard) {
-        const index = this.flashcards.indexOf(card)
+        const index = this._flashService.flashcards.indexOf(card)
         this._sheetsService.deleteFlashcard(
             this._flashService.spreadsheetId!,
             this.currentDeck!.name,
@@ -276,7 +276,7 @@ export class DecksComponent implements OnInit {
     saveEdit(updatedFlashcard: Flashcard) {
         if (!this.currentFlashcard) return
 
-        const index = this.flashcards.indexOf(this.currentFlashcard)
+        const index = this._flashService.flashcards.indexOf(this.currentFlashcard)
         this._sheetsService.updateFlashcard(
             this._flashService.spreadsheetId!,
             this.currentDeck!.name,
@@ -293,4 +293,4 @@ export class DecksComponent implements OnInit {
         this.editCard = null
         this.currentFlashcard = null
     }
-} 
+}

@@ -36,6 +36,7 @@ export class FlashService {
   set isForceCorrectAnswer(value: boolean) { this._isForceCorrectAnswer = value }
   get previousFlashcardIndex() { return this._previousFlashcardIndex }
   set previousFlashcardIndex(value: number | null) { this._previousFlashcardIndex = value }
+  get isDemoMode() { return this._sheetsService.isDemoMode }
 
   constructor(private _sheetsService: GoogleSheetsService, private _http: HttpClient) { }
 
@@ -59,8 +60,11 @@ export class FlashService {
         const deck = decks.find(d => d.name === lastDeckName)
         if (deck) {
           this.selectDeck(deck.id)
+          return
         }
       }
+
+      if (decks.length > 0) this.selectDeck(decks[0].id)
     })
   }
 
@@ -93,6 +97,15 @@ export class FlashService {
   }
 
   showNextFlashcard() {
+    if (this.flashcards.length === 1) {
+      this._currentFlashcard = this.flashcards[0]
+      this.previousFlashcardIndex = 0
+      this.answer = ''
+      this.feedback = ''
+      this.isForceCorrectAnswer = false
+      return
+    }
+
     const currentDate = new Date()
     const randomChance = 1 / 20 // 1/20 chance for a completely random flashcard selection
     const windowSize = 5 // Window of top 5 flashcards based on weight
@@ -252,5 +265,16 @@ export class FlashService {
     this._sheetsService.createFlashcard(this.spreadsheetId, this.currentDeck.name, newFlashcard).subscribe(() => {
       this.loadFlashcards()
     })
+  }
+
+  resetDemoData() {
+    if (!this.isDemoMode) return
+
+    this._sheetsService.resetDemoData()
+    localStorage.removeItem(this.LAST_SELECTED_DECK_KEY)
+    this._currentDeck.next(null)
+    this._flashcards.next([])
+    this._currentFlashcard = null
+    this.initialize()
   }
 }

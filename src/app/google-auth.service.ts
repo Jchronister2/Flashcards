@@ -3,6 +3,7 @@ import { BehaviorSubject } from 'rxjs'
 import { Injectable } from '@angular/core'
 import { Router } from '@angular/router'
 import { environment } from '../environments/environment'
+import { RuntimeConfigService } from './runtime-config.service'
 
 // google-auth.service.ts
 
@@ -14,20 +15,25 @@ const TOKEN_EXPIRY_KEY = 'google_token_expiry'
 })
 export class GoogleAuthService {
   private _tokenClient: any
+  private _clientReady: Promise<void> | null = null
   public user$ = new BehaviorSubject<any | null>(null)
   private _lastRoute: string | null = null
 
-  constructor(private _router: Router) {
-    // Wait for Google API to be ready
-    if (window.google) {
-      this.initializeClient()
+  constructor(
+    private _router: Router,
+    private _runtimeConfig: RuntimeConfigService
+  ) {
+    if (this._runtimeConfig.isDemoMode) {
+      this.user$.next({ name: 'Public demo', email: 'Sample data' })
+      return
+    }
+
+    if (!this._runtimeConfig.googleClientId) {
+      console.error('Google OAuth is not configured. Add src/assets/config.local.js from the checked-in example.')
     } else {
-      const checkGoogle = setInterval(() => {
-        if (window.google) {
-          this.initializeClient()
-          clearInterval(checkGoogle)
-        }
-      }, 100)
+      this._clientReady = this.loadGoogleIdentityClient()
+        .then(() => this.initializeClient())
+      this._clientReady.catch(error => console.error('Unable to load Google OAuth:', error))
     }
 
     // If already authenticated, fetch user info
@@ -42,6 +48,28 @@ export class GoogleAuthService {
     setInterval(() => this.checkTokenExpiration(), 60000) // Check every minute
   }
 
+  private loadGoogleIdentityClient(): Promise<void> {
+    if (window.google?.accounts?.oauth2) return Promise.resolve()
+
+    return new Promise((resolve, reject) => {
+      const existing = document.querySelector<HTMLScriptElement>('script[data-google-identity-client]')
+      const script = existing ?? document.createElement('script')
+
+      const handleLoad = () => resolve()
+      const handleError = () => reject(new Error('Google Identity Services failed to load'))
+      script.addEventListener('load', handleLoad, { once: true })
+      script.addEventListener('error', handleError, { once: true })
+
+      if (!existing) {
+        script.src = 'https://accounts.google.com/gsi/client'
+        script.async = true
+        script.defer = true
+        script.dataset['googleIdentityClient'] = 'true'
+        document.head.appendChild(script)
+      }
+    })
+  }
+
   private checkTokenExpiration() {
     if (this.isAuthenticated()) {
       const token = localStorage.getItem(TOKEN_KEY)
@@ -54,13 +82,10 @@ export class GoogleAuthService {
   }
 
   initializeClient() {
-    if (!environment.googleClientId) {
-      console.error('Google OAuth is not configured. Add src/assets/config.local.js from the checked-in example.')
-      return
-    }
+    if (this._runtimeConfig.isDemoMode) return
 
     this._tokenClient = window.google.accounts.oauth2.initTokenClient({
-      client_id: environment.googleClientId,
+      client_id: this._runtimeConfig.googleClientId,
       scope: environment.googleScopes,
       callback: (tokenResponse: any) => {
         if (tokenResponse && tokenResponse.access_token) {
@@ -85,7 +110,18 @@ export class GoogleAuthService {
     })
   }
 
-  signIn() {
+  async signIn() {
+    if (this._runtimeConfig.isDemoMode) {
+      this._router.navigate(['/study'])
+      return
+    }
+
+    try {
+      await this._clientReady
+    } catch {
+      return
+    }
+
     if (this._tokenClient) {
       this._tokenClient.requestAccessToken({
         prompt: 'consent'
@@ -96,6 +132,8 @@ export class GoogleAuthService {
   }
 
   signOut() {
+    if (this._runtimeConfig.isDemoMode) return
+
     // Store the current route before signing out
     if (this._router.url !== '/login') {
       this._lastRoute = this._router.url
@@ -130,6 +168,8 @@ export class GoogleAuthService {
   }
 
   isAuthenticated(): boolean {
+    if (this._runtimeConfig.isDemoMode) return true
+
     const token = localStorage.getItem(TOKEN_KEY)
     const expiryTime = localStorage.getItem(TOKEN_EXPIRY_KEY)
 

@@ -4,7 +4,7 @@
         <div class="d-flex align-items-center justify-content-between mb-4">
             <h2 class="mb-0">Study Session</h2>
             <div class="deck-select-wrapper">
-                <select class="form-select" [(ngModel)]="selectedDeckId" (change)="onDeckChange()">
+                <select class="form-select" [ngModel]="currentDeck?.id" (ngModelChange)="onDeckChange($event)">
                     <option *ngFor="let deck of decks" [value]="deck.id">{{ deck.name }}</option>
                 </select>
             </div>
@@ -16,7 +16,7 @@
         <div *ngIf="decks.length === 0">
             <p class="h4 mb-3">Loading decks...</p>
         </div>
-        <div *ngIf="decks.length > 0 && !selectedDeckId">
+        <div *ngIf="decks.length > 0 && !currentDeck">
             <p class="h4 mb-3">Please select a deck to start studying</p>
         </div>
     </div>

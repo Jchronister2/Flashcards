@@ -1,6 +1,6 @@
 import { FlashService } from 'src/app/flash.service'
 
-import { Component, OnInit } from '@angular/core'
+import { Component } from '@angular/core'
 
 import { GoogleAuthService } from './google-auth.service'
 
@@ -10,18 +10,13 @@ import { GoogleAuthService } from './google-auth.service'
     styleUrls: ['./app.component.css'],
     standalone: false
 })
-export class AppComponent implements OnInit {
+export class AppComponent {
   get flashcards() { return this._flashService.flashcards }
   get isAuthenticated(): boolean { return this._authService.isAuthenticated() }
+  get isDemoMode(): boolean { return this._flashService.isDemoMode }
   get user() { return this._authService.user$.getValue() }
 
   constructor(private _authService: GoogleAuthService, private _flashService: FlashService) { }
-
-  ngOnInit() {
-    if (this._authService.isAuthenticated()) {
-      this._authService.initializeClient()
-    }
-  }
 
   onLogin() {
     this._authService.signIn()
@@ -29,6 +24,10 @@ export class AppComponent implements OnInit {
 
   onLogout() {
     this._authService.signOut()
+  }
+
+  onResetDemoData() {
+    this._flashService.resetDemoData()
   }
 
   getProfileImageUrl(): string {

@@ -27,6 +27,7 @@ jobs:
       - run: npm run test:ci
       - run: npm run validate:public
       - run: npm audit --omit=dev
+      - run: npm run audit:critical
       - run: npm run build:pages
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

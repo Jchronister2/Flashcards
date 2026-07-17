@@ -10,7 +10,8 @@
     "test": "ng test",
     "test:ci": "ng test --watch=false --browsers=ChromeHeadless",
     "validate:public": "node scripts/validate-public-release.mjs",
-    "verify": "npm run build && npm run test:ci && npm run validate:public && npm audit --omit=dev"
+    "audit:critical": "npm audit --audit-level=critical",
+    "verify": "npm run build && npm run test:ci && npm run validate:public && npm audit --omit=dev && npm run audit:critical"
   },
   "private": true,
   "dependencies": {
@@ -43,5 +44,8 @@
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
     "typescript": "~5.8.3"
+  },
+  "overrides": {
+    "websocket-driver": "0.7.5"
   }
 }

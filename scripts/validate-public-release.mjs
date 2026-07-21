@@ -20,8 +20,8 @@ const requiredPaths = [
   'src/assets/config.public.js'
 ]
 const approvedScreenshotHashes = {
-  'docs/screenshots/deck-manager.png': '731fd6ce86a7a237cc0dbc6e27bdd266f4f014a55f6f1279d2db970991ad675c',
-  'docs/screenshots/study-session.png': 'ae446579dfd94ab45833cc7ffe8cc00970758203ba6faecbbe4b15ba40a2fc48'
+  'docs/screenshots/deck-manager.png': '61a09f07216cb412135ad42ea49da59ac7a2e52d798bc1a57f5eeaaef0d064c9',
+  'docs/screenshots/study-session.png': '7fcb229a9eaabe7d43cd8a8faee6ff564f311077b6cfe0c6f5d71e33a6c19d8a'
 }
 const forbiddenContent = [
   /AIza[0-9A-Za-z_-]{20,}/,

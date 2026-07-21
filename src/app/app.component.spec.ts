@@ -18,19 +18,25 @@ class DemoAuthStub {
 class DemoFlashStub {
   readonly isDemoMode = true
   readonly flashcards = []
+  readonly decks = [{ id: 1, name: 'System Design' }]
+  readonly currentDeck = this.decks[0]
+  selectDeck = jasmine.createSpy('selectDeck')
   resetDemoData = jasmine.createSpy('resetDemoData')
 }
 
 describe('AppComponent', () => {
-  beforeEach(() => TestBed.configureTestingModule({
-    imports: [RouterTestingModule, HttpClientTestingModule],
-    declarations: [AppComponent],
-    schemas: [NO_ERRORS_SCHEMA],
-    providers: [
-      { provide: GoogleAuthService, useClass: DemoAuthStub },
-      { provide: FlashService, useClass: DemoFlashStub }
-    ]
-  }));
+  beforeEach(() => {
+    localStorage.clear()
+    TestBed.configureTestingModule({
+      imports: [RouterTestingModule, HttpClientTestingModule],
+      declarations: [AppComponent],
+      schemas: [NO_ERRORS_SCHEMA],
+      providers: [
+        { provide: GoogleAuthService, useClass: DemoAuthStub },
+        { provide: FlashService, useClass: DemoFlashStub }
+      ]
+    })
+  });
 
   it('should create the app', () => {
     const fixture = TestBed.createComponent(AppComponent);
@@ -43,7 +49,7 @@ describe('AppComponent', () => {
     const flashService = TestBed.inject(FlashService) as unknown as DemoFlashStub
     fixture.detectChanges()
 
-    expect(fixture.nativeElement.querySelector('.demo-badge')?.textContent).toContain('Demo')
+    expect(fixture.nativeElement.querySelector('.demo-badge')?.textContent).toContain('Public demo')
     fixture.nativeElement.querySelector('.reset-demo-button').click()
     expect(flashService.resetDemoData).toHaveBeenCalled()
   })
@@ -55,6 +61,15 @@ describe('AppComponent', () => {
     fixture.detectChanges()
 
     expect(authService.initializeClient).not.toHaveBeenCalled()
+  })
+
+  it('selects a sidebar deck', () => {
+    const fixture = TestBed.createComponent(AppComponent)
+    const flashService = TestBed.inject(FlashService) as unknown as DemoFlashStub
+
+    fixture.componentInstance.onDeckSelect(1)
+
+    expect(flashService.selectDeck).toHaveBeenCalledOnceWith(1)
   })
 
 });

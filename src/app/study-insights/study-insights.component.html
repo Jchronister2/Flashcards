@@ -1,0 +1,41 @@
+<aside class="study-insights">
+    <div class="panel-title">Progress</div>
+    <div class="progress-summary">
+        <div class="mastery-ring" [style.--score]="masteryScore">
+            <span>{{ masteryScore }}%</span>
+            <small>Mastery</small>
+        </div>
+        <div class="summary-metrics">
+            <div>
+                <span class="material-icons calendar">event_available</span>
+                <strong>{{ dueCount }} cards</strong>
+                <small>Current deck</small>
+            </div>
+            <div>
+                <span class="material-icons streak">local_fire_department</span>
+                <strong>Streak {{ streakDays }}</strong>
+                <small>Days in a row</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="week-dots">
+        <div *ngFor="let day of weekActivity">
+            <span [class.filled]="day.level > 0"></span>
+            <span [class.filled]="day.level > 1"></span>
+            <small>{{ day.label }}</small>
+        </div>
+    </div>
+
+    <div class="up-next">
+        <div class="panel-title">Up next</div>
+        <div class="next-card" *ngFor="let card of upcomingCards">
+            <span>{{ card.front }}</span>
+            <span class="mini-tag" *ngIf="card.tags">{{ card.tags.split(',')[0] }}</span>
+        </div>
+        <button type="button" class="view-all" routerLink="/decks">
+            View all ({{ dueCount }})
+            <span class="material-icons">chevron_right</span>
+        </button>
+    </div>
+</aside>

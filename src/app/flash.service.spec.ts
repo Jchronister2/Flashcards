@@ -7,6 +7,7 @@ import { of } from 'rxjs';
 
 class DemoSheetsStub {
   readonly isDemoMode = true
+  updateFlashcard = jasmine.createSpy('updateFlashcard').and.returnValue(of(null))
   getUserSpreadsheet() { return of('demo-spreadsheet') }
   getDecks() { return of([{ id: 1, name: 'Sample deck' }]) }
   getLastDeckName() { return null }
@@ -54,5 +55,20 @@ describe('FlashService', () => {
 
     expect(service.currentFlashcard?.front).toBe('Question')
     expect(Math.random).not.toHaveBeenCalled()
+  })
+
+  it('records a study rating and advances without requiring a typed answer', () => {
+    const sheets = TestBed.inject(GoogleSheetsService) as unknown as DemoSheetsStub
+    service.initialize()
+
+    service.rateCurrentCard(false)
+
+    expect(sheets.updateFlashcard).toHaveBeenCalledWith(
+      'demo-spreadsheet',
+      'Sample deck',
+      0,
+      jasmine.objectContaining({ incorrectCount: 1 })
+    )
+    expect(service.isForceCorrectAnswer).toBeFalse()
   })
 });

@@ -163,8 +163,8 @@ export class GoogleSheetsService {
     }).pipe(
       tap(response => console.log('Spreadsheet details:', response)),
       map((response: any) => {
-        const decks = response.sheets.map((sheet: any, index: number) => ({
-          id: index + 1,
+        const decks = response.sheets.map((sheet: any) => ({
+          id: sheet.properties.sheetId,
           name: sheet.properties.title
         }))
         console.log('Found decks:', decks)
@@ -301,7 +301,7 @@ export class GoogleSheetsService {
       requests: [{
         updateSheetProperties: {
           properties: {
-            sheetId: deckId - 1,
+            sheetId: deckId,
             title: newName
           },
           fields: 'title'

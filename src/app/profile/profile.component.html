@@ -1,6 +1,7 @@
 <div class="profile-container" (clickOutside)="closeMenu()">
     <div class="profile-button" (click)="toggleMenu()">
         <img [src]="user?.picture" alt="Profile Picture" (error)="handleImageError($event)" class="profile-image">
+        <span class="profile-name">{{ user?.name }}</span>
         <span class="material-icons expand-icon" [class.open]="isMenuOpen">
             expand_more
         </span>

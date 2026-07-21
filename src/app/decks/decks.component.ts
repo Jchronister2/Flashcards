@@ -20,6 +20,7 @@ export class DecksComponent implements OnInit {
     newDeckName = ''
     activeTagFilter: string | null = null
     searchQuery: string = ''
+    showCreateDeckModal = false
     showCreateModal = false
     showEditModal = false
     showDeleteModal = false
@@ -59,11 +60,29 @@ export class DecksComponent implements OnInit {
     ) { }
 
     ngOnInit() {
-        this._flashService.initialize()
+        Promise.resolve().then(() => this._flashService.initialize())
     }
 
     onDeckSelect(deckId: number) {
         this._flashService.selectDeck(deckId)
+    }
+
+    showCreateDeck() {
+        this.newDeckName = ''
+        this.showCreateDeckModal = true
+    }
+
+    hideCreateDeck() {
+        this.newDeckName = ''
+        this.showCreateDeckModal = false
+    }
+
+    createDeck() {
+        const name = this.newDeckName.trim()
+        if (!name) return
+
+        this._flashService.createDeck(name)
+        this.hideCreateDeck()
     }
 
     startEditingDeckName() {

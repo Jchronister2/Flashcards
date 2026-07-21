@@ -198,7 +198,16 @@ export class FlashService {
     }
   }
 
-  updateFlashcardScore(isCorrect: boolean) {
+  rateCurrentCard(isCorrect: boolean) {
+    if (!this.currentFlashcard) return
+
+    this.feedback = isCorrect ? 'Rated for review.' : 'Marked to review again.'
+    this.isAnsweredCorrectly = isCorrect
+    this.isForceCorrectAnswer = false
+    this.updateFlashcardScore(isCorrect, true)
+  }
+
+  updateFlashcardScore(isCorrect: boolean, advanceAfterSave = false) {
     if (!this.currentFlashcard || !this.spreadsheetId || !this.currentDeck) return
 
     const flashcard = { ...this.currentFlashcard }
@@ -223,6 +232,7 @@ export class FlashService {
       updatedFlashcards[index] = flashcard
       this._flashcards.next(updatedFlashcards)
       this._currentFlashcard = flashcard
+      if (advanceAfterSave) this.showNextFlashcard()
     })
   }
 

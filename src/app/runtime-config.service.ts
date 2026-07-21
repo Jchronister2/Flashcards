@@ -20,9 +20,10 @@ export function resolveDemoMode(config: FlashcardsRuntimeConfig, url: string): b
 @Injectable({ providedIn: 'root' })
 export class RuntimeConfigService {
   private readonly config: FlashcardsRuntimeConfig = window.flashcardsConfig ?? {}
+  private readonly demoMode = resolveDemoMode(this.config, window.location.href)
 
   get isDemoMode(): boolean {
-    return resolveDemoMode(this.config, window.location.href)
+    return this.demoMode
   }
 
   get googleClientId(): string {

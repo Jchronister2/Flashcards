@@ -6,26 +6,39 @@
 .profile-button {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
+    min-height: 48px;
+    padding: 4px 8px 4px 4px;
+    border-radius: 8px;
+    color: #24364b;
     cursor: pointer;
-    padding: 4px;
-    border-radius: 24px;
     transition: background-color 0.2s;
 }
 
 .profile-button:hover {
-    background-color: rgba(0, 0, 0, 0.05);
+    background-color: #f2f5f9;
 }
 
 .profile-image {
-    width: 40px;
-    height: 40px;
+    width: 42px;
+    height: 42px;
     border-radius: 50%;
     object-fit: cover;
+    box-shadow: 0 0 0 2px #fff, 0 6px 16px rgba(15, 23, 42, 0.12);
+}
+
+.profile-name {
+    max-width: 150px;
+    overflow: hidden;
+    color: #24364b;
+    font-size: 14px;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .expand-icon {
-    color: #5f6368;
+    color: #52657a;
     transition: transform 0.2s;
 }
 
@@ -35,21 +48,22 @@
 
 .profile-menu {
     position: absolute;
-    top: calc(100% + 8px);
+    top: calc(100% + 10px);
     right: 0;
-    background: white;
+    min-width: 300px;
+    overflow: hidden;
+    border: 1px solid #dfe5ef;
     border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    min-width: 280px;
-    padding: 8px 0;
+    background: #fff;
+    box-shadow: 0 22px 48px rgba(15, 23, 42, 0.16);
     z-index: 1000;
 }
 
 .menu-header {
     display: flex;
     align-items: center;
-    padding: 16px;
     gap: 12px;
+    padding: 18px;
 }
 
 .menu-profile-image {
@@ -65,47 +79,78 @@
 }
 
 .user-name {
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: #202124;
     margin-bottom: 4px;
-    white-space: nowrap;
     overflow: hidden;
+    color: #101828;
+    font-size: 14px;
+    font-weight: 760;
     text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .user-email {
-    font-size: 0.8rem;
-    color: #5f6368;
-    white-space: nowrap;
     overflow: hidden;
+    color: #667085;
+    font-size: 13px;
     text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .menu-divider {
     height: 1px;
-    background-color: #e8eaed;
-    margin: 8px 0;
+    background-color: #e4eaf2;
 }
 
+.copy-login-button,
 .logout-button {
     display: flex;
     align-items: center;
     gap: 12px;
     width: 100%;
-    padding: 12px 16px;
+    min-height: 46px;
+    padding: 0 16px;
     border: none;
     background: none;
-    color: #5f6368;
-    font-size: 0.9rem;
+    color: #475467;
+    font-size: 14px;
+    font-weight: 650;
     cursor: pointer;
-    transition: background-color 0.2s;
+    transition: background-color 0.2s, color 0.2s;
 }
 
+.copy-login-button:hover,
 .logout-button:hover {
-    background-color: #f8f9fa;
+    background-color: #f4f7fb;
+    color: #155eef;
 }
 
+.copy-login-button .material-icons,
 .logout-button .material-icons {
     font-size: 20px;
+}
+
+@media (max-width: 720px) {
+    .profile-name {
+        display: none;
+    }
+}
+
+:host-context(.dark-theme) .profile-button,
+:host-context(.dark-theme) .profile-name,
+:host-context(.dark-theme) .expand-icon {
+    color: #dbe7f6;
+}
+
+:host-context(.dark-theme) .profile-button:hover,
+:host-context(.dark-theme) .profile-menu {
+    border-color: #26364d;
+    background: #111c2f;
+}
+
+:host-context(.dark-theme) .user-name {
+    color: #f8fbff;
+}
+
+:host-context(.dark-theme) .user-email {
+    color: #98a8bd;
 }

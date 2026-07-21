@@ -10,13 +10,15 @@ import { DecksComponent } from './decks/decks.component'
 import { EditFlashcardModalComponent } from './edit-flashcard-modal/edit-flashcard-modal.component'
 import { ProfileComponent } from './profile/profile.component'
 import { StudyComponent } from './study/study.component'
+import { StudyInsightsComponent } from './study-insights/study-insights.component'
 
 @NgModule({ declarations: [
         AppComponent,
         DecksComponent,
         EditFlashcardModalComponent,
         ProfileComponent,
-        StudyComponent
+        StudyComponent,
+        StudyInsightsComponent
     ],
     bootstrap: [AppComponent], imports: [AppRoutingModule,
         BrowserModule,

@@ -1,7 +1,13 @@
 <div class="decks-container">
     <!-- Decks List -->
     <div class="deck-list">
-        <h2>Your Decks</h2>
+        <div class="deck-list-header">
+            <h2>Your Decks</h2>
+            <button type="button" class="new-deck-button" (click)="showCreateDeck()">
+                <span class="material-icons">add</span>
+                New deck
+            </button>
+        </div>
         <div class="deck-buttons">
             <button class="deck-button" *ngFor="let deck of decks" [class.active]="deck.id === currentDeck?.id"
                 (click)="onDeckSelect(deck.id)">
@@ -15,6 +21,30 @@
                     <span (dblclick)="startEditingDeckName()">{{ deck.name }}</span>
                 </ng-container>
             </button>
+        </div>
+    </div>
+
+    <div class="modal" *ngIf="showCreateDeckModal">
+        <div class="modal-content deck-modal-content">
+            <div class="modal-header">
+                <h4>Create New Deck</h4>
+                <button type="button" class="close-btn" aria-label="Close new deck dialog"
+                    (click)="hideCreateDeck()">
+                    <span class="material-icons">close</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="deckName">Deck name</label>
+                    <input id="deckName" type="text" [(ngModel)]="newDeckName" class="form-control"
+                        (keyup.enter)="createDeck()" autofocus>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" (click)="hideCreateDeck()">Cancel</button>
+                <button type="button" class="btn btn-primary" (click)="createDeck()"
+                    [disabled]="!newDeckName.trim()">Create</button>
+            </div>
         </div>
     </div>
 
@@ -50,7 +80,8 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h4>Create New Flashcard</h4>
-                    <button class="close-btn" (click)="hideCreateCardModal()">
+                    <button type="button" class="close-btn" aria-label="Close new card dialog"
+                        (click)="hideCreateCardModal()">
                         <span class="material-icons">close</span>
                     </button>
                 </div>
@@ -137,10 +168,12 @@
                         </td>
                         <td>
                             <div class="action-buttons">
-                                <button class="btn btn-sm btn-outline-primary" (click)="editFlashcard(card)">
+                                <button type="button" class="btn btn-sm btn-outline-primary" aria-label="Edit card"
+                                    title="Edit card" (click)="editFlashcard(card)">
                                     <span class="material-icons">edit</span>
                                 </button>
-                                <button class="btn btn-sm btn-outline-danger" (click)="deleteFlashcard(card)">
+                                <button type="button" class="btn btn-sm btn-outline-danger" aria-label="Delete card"
+                                    title="Delete card" (click)="deleteFlashcard(card)">
                                     <span class="material-icons">delete</span>
                                 </button>
                             </div>
@@ -176,7 +209,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h4>Delete Flashcard</h4>
-                <button class="close-btn" (click)="hideDeleteModal()">
+                <button type="button" class="close-btn" aria-label="Close delete dialog" (click)="hideDeleteModal()">
                     <span class="material-icons">close</span>
                 </button>
             </div>

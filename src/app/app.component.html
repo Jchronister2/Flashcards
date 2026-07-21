@@ -1,22 +1,86 @@
-<!-- app.component.html -->
-<div class="container-fluid min-vh-100 bg-light p-0">
-    <div *ngIf="isAuthenticated" class="app-container">
-        <div class="app-header">
-            <h1>Flashcards</h1>
-            <div class="nav-buttons">
-                <button routerLink="/decks" routerLinkActive="active">Decks</button>
-                <button routerLink="/study" routerLinkActive="active">Study</button>
+<ng-container *ngIf="isAuthenticated; else signedOut">
+    <div class="app-shell" [class.dark-theme]="isDarkMode">
+        <aside class="app-sidebar">
+            <div class="brand">
+                <div class="brand-mark">
+                    <span class="material-icons">style</span>
+                </div>
+                <span>Flashcards</span>
             </div>
-            <div *ngIf="isDemoMode" class="demo-actions">
-                <span class="demo-badge">Demo data</span>
-                <button class="reset-demo-button" type="button" title="Reset demo data" (click)="onResetDemoData()">
-                    <span class="material-icons" aria-hidden="true">restart_alt</span>
-                    <span class="visually-hidden">Reset demo data</span>
+
+            <nav class="side-nav">
+                <div class="nav-label">Study</div>
+                <a routerLink="/study" routerLinkActive="active" class="side-nav-item">
+                    <span class="material-icons">web_stories</span>
+                    <span>Flashcards</span>
+                </a>
+            </nav>
+
+            <div class="deck-nav">
+                <div class="nav-label with-action">
+                    <span>Decks</span>
+                    <a routerLink="/decks" title="Create a card">
+                        <span class="material-icons">add</span>
+                    </a>
+                </div>
+                <a routerLink="/decks" routerLinkActive="active" class="side-nav-item">
+                    <span class="material-icons">folder</span>
+                    <span>All decks</span>
+                    <span class="item-count">{{ decks.length || 0 }}</span>
+                </a>
+                <button *ngFor="let deck of decks" type="button" class="deck-link"
+                    [class.active]="deck.id === currentDeck?.id" (click)="onDeckSelect(deck.id)">
+                    <span>{{ deck.name }}</span>
+                    <span class="item-count" *ngIf="deck.id === currentDeck?.id">{{ dueCount }}</span>
                 </button>
             </div>
-            <app-profile *ngIf="!isDemoMode"></app-profile>
-        </div>
-    </div>
 
+            <a routerLink="/decks" class="browse-button">
+                <span class="material-icons">grid_view</span>
+                Browse all decks
+            </a>
+        </aside>
+
+        <section class="app-main">
+            <header class="top-bar">
+                <div class="top-tabs">
+                    <a routerLink="/decks" routerLinkActive="active">Decks</a>
+                    <a routerLink="/study" routerLinkActive="active">Study</a>
+                </div>
+                <div class="top-actions">
+                    <div class="sync-status" *ngIf="isDemoMode; else connectedStatus">
+                        <span class="material-icons">check_circle</span>
+                        Demo data stays in this browser
+                    </div>
+                    <ng-template #connectedStatus>
+                        <div class="sync-status">
+                            <span class="material-icons">cloud_done</span>
+                            Google Sheets mode
+                        </div>
+                    </ng-template>
+                    <div *ngIf="isDemoMode" class="demo-actions">
+                        <span class="demo-badge">Public demo</span>
+                        <button class="icon-button reset-demo-button" type="button" title="Reset demo data"
+                            (click)="onResetDemoData()">
+                            <span class="material-icons" aria-hidden="true">restart_alt</span>
+                            <span class="visually-hidden">Reset demo data</span>
+                        </button>
+                    </div>
+                    <button class="icon-button" type="button" title="Toggle theme" (click)="toggleTheme()"
+                        [attr.aria-pressed]="isDarkMode">
+                        <span class="material-icons">{{ isDarkMode ? 'light_mode' : 'dark_mode' }}</span>
+                    </button>
+                    <app-profile *ngIf="!isDemoMode"></app-profile>
+                </div>
+            </header>
+
+            <main class="route-surface">
+                <router-outlet></router-outlet>
+            </main>
+        </section>
+    </div>
+</ng-container>
+
+<ng-template #signedOut>
     <router-outlet></router-outlet>
-</div>
+</ng-template>

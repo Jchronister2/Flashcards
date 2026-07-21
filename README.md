@@ -1,6 +1,6 @@
 # Flashcards
 
-An Angular study app for deck management, card editing, free-response study sessions, answer tracking, tags, and per-card performance history.
+An Angular study workspace for deck management, card editing, free-response practice, self-rated review, progress tracking, and per-card performance history.
 
 **[Open the public demo](https://jchronister2.github.io/Flashcards/)**
 
@@ -9,9 +9,11 @@ The public demo uses sample decks stored only in your browser. A self-hosted dep
 ## Features
 
 - Creates and manages flashcard decks as Google Sheets tabs.
-- Adds, edits, and deletes cards.
-- Runs free-response study sessions and tracks correct/incorrect counts.
-- Remembers the most recently selected deck.
+- Adds, searches, sorts, edits, and deletes cards with tag filtering.
+- Supports typed answers, answer reveal, and Again/Good/Easy self-rating.
+- Tracks mastery, recent study activity, streaks, and per-card outcomes.
+- Includes bookmarks, text-to-speech, fullscreen study, and light/dark themes.
+- Remembers the most recently selected deck and keeps demo changes in browser storage.
 - Keeps the user's spreadsheet in their own Google Drive.
 
 ## Screenshots

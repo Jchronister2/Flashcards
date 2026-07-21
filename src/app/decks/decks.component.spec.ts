@@ -31,4 +31,21 @@ describe('DecksComponent', () => {
 
     expect(sheetsService.deleteFlashcard).toHaveBeenCalledWith('demo-spreadsheet', 'Deck', 0)
   })
+
+  it('creates a named deck from the deck manager', () => {
+    const flashService = {
+      decks: [],
+      currentDeck: null,
+      flashcards: [],
+      createDeck: jasmine.createSpy('createDeck')
+    }
+    const component = new DecksComponent(flashService as any, {} as any)
+    component.newDeckName = 'Backend Systems'
+    component.showCreateDeckModal = true
+
+    component.createDeck()
+
+    expect(flashService.createDeck).toHaveBeenCalledOnceWith('Backend Systems')
+    expect(component.showCreateDeckModal).toBeFalse()
+  })
 })

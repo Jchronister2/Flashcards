@@ -1,101 +1,123 @@
-<div class="study-container">
-    <!-- Deck Selection -->
-    <div class="deck-selector" *ngIf="decks.length > 0">
-        <div class="d-flex align-items-center justify-content-between mb-4">
-            <h2 class="mb-0">Study Session</h2>
-            <div class="deck-select-wrapper">
-                <select class="form-select" [ngModel]="currentDeck?.id" (ngModelChange)="onDeckChange($event)">
-                    <option *ngFor="let deck of decks" [value]="deck.id">{{ deck.name }}</option>
-                </select>
+<section class="study-page">
+    <div class="study-toolbar" *ngIf="decks.length > 0">
+        <button class="back-link" routerLink="/decks">
+            <span class="material-icons">arrow_back</span>
+            Back to decks
+        </button>
+
+        <div class="deck-switcher">
+            <span class="material-icons">style</span>
+            <select [ngModel]="currentDeck?.id" (ngModelChange)="onDeckChange($event)">
+                <option *ngFor="let deck of decks" [ngValue]="deck.id">{{ deck.name }}</option>
+            </select>
+            <span class="material-icons">expand_more</span>
+        </div>
+
+        <div class="toolbar-actions">
+            <button type="button" title="Options" (click)="toggleOptions()" [attr.aria-expanded]="showOptionsPanel">
+                <span class="material-icons">settings</span>
+                Options
+            </button>
+            <button type="button" title="Fullscreen" (click)="toggleFullscreen()">
+                <span class="material-icons">{{ isFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</span>
+                {{ isFullscreen ? 'Exit' : 'Fullscreen' }}
+            </button>
+
+            <div class="options-popover" *ngIf="showOptionsPanel">
+                <button type="button" (click)="shuffleCard()">
+                    <span class="material-icons">shuffle</span>
+                    Shuffle next card
+                </button>
+                <button type="button" (click)="clearAnswer()">
+                    <span class="material-icons">backspace</span>
+                    Clear answer
+                </button>
+                <button type="button" (click)="openEditModal(); showOptionsPanel = false">
+                    <span class="material-icons">edit</span>
+                    Edit current card
+                </button>
+                <button type="button" (click)="copyCurrentCard()">
+                    <span class="material-icons">content_copy</span>
+                    Copy current card
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- Loading State -->
-    <div *ngIf="!currentFlashcard" class="text-center py-5">
-        <div *ngIf="decks.length === 0">
-            <p class="h4 mb-3">Loading decks...</p>
-        </div>
-        <div *ngIf="decks.length > 0 && !currentDeck">
-            <p class="h4 mb-3">Please select a deck to start studying</p>
+    <div class="loading-state" *ngIf="!currentFlashcard">
+        <div class="loading-card">
+            <span class="material-icons">style</span>
+            <h2>{{ decks.length === 0 ? 'Loading decks...' : 'Select a deck to start studying' }}</h2>
+            <p>Your flashcards will appear here once the deck is ready.</p>
         </div>
     </div>
 
-    <!-- Flashcard Display -->
-    <div class="d-flex justify-content-between align-items-center" style="min-height: 350px" *ngIf="currentFlashcard">
-        <!-- Front of Flashcard -->
-        <div class="position-relative" style="width: 45%; min-height: 350px;">
-            <!-- Back layer card -->
-            <div class="card flashcard bg-primary text-light border-light position-absolute"
-                style="bottom: 10px; right: 10px">
+    <div class="study-grid" *ngIf="currentFlashcard">
+        <main class="study-workspace">
+            <div class="progress-row">
+                <span class="position-pill">{{ currentCardIndex }} / {{ flashcards.length }}</span>
+                <div class="progress-track">
+                    <div class="progress-fill" [style.width.%]="flashcards.length ? (currentCardIndex / flashcards.length) * 100 : 0"></div>
+                </div>
             </div>
-            <!-- Middle layer card -->
-            <div class="card flashcard bg-primary text-light border-light position-absolute"
-                style="bottom: 5px; right: 5px">
-            </div>
-            <!-- Front card -->
-            <div class="card flashcard bg-primary text-light border-light">
-                <div class="d-flex justify-content-between align-items-center p-3 position-relative">
-                    <h5 class="card-title position-absolute start-50 translate-middle-x" style="font-size: 1.75rem;">
-                        Front
-                    </h5>
-                    <div class="d-flex gap-2">
-                        <span class="material-icons" type="button" (click)="openEditModal()">edit</span>
+
+            <article class="study-card">
+                <div class="card-tools">
+                    <button type="button" [title]="isBookmarked ? 'Remove bookmark' : 'Bookmark card'"
+                        (click)="toggleBookmark()" [class.active]="isBookmarked">
+                        <span class="material-icons">{{ isBookmarked ? 'bookmark' : 'bookmark_border' }}</span>
+                    </button>
+                    <button type="button" title="Read aloud" (click)="speakCard()">
+                        <span class="material-icons">volume_up</span>
+                    </button>
+                </div>
+
+                <div class="card-content">
+                    <div class="card-kicker">{{ currentDeck?.name || 'Flashcard' }}</div>
+                    <h1>{{ currentFlashcard.front }}</h1>
+                    <p class="answer-preview" *ngIf="isRevealed">{{ currentFlashcard.back }}</p>
+                    <div class="tag-row" *ngIf="tags.length">
+                        <span *ngFor="let tag of tags">#{{ tag }}</span>
                     </div>
                 </div>
+            </article>
 
-                <div class="position-absolute top-50 start-50 translate-middle" style="flex-grow: 1;">
-                    <p class="card-text text-center" style="font-size: 1.5rem;">{{ currentFlashcard.front }}</p>
-                </div>
-
-                <div class="position-absolute bottom-0 start-50 translate-middle" style="flex-grow: 1;">
-                    <div class="d-flex flex-wrap gap-2">
-                        <span *ngFor="let tag of tags" class="badge rounded-pill bg-info">#{{ tag }}</span>
-                    </div>
-                </div>
+            <div class="answer-panel">
+                <input type="text" [(ngModel)]="answer" placeholder="Type an answer, or reveal it"
+                    (keydown.enter)="submitAnswer()" [disabled]="isForceCorrectAnswer && isAnsweredCorrectly" />
+                <button class="primary-action" (click)="answer.trim() ? submitAnswer() : revealAnswer()">
+                    <span class="material-icons">{{ answer.trim() ? 'check' : 'visibility' }}</span>
+                    {{ answer.trim() ? 'Check' : 'Reveal' }}
+                </button>
             </div>
-        </div>
 
-        <!-- Input and Back of Flashcard with stacking effect -->
-        <div class="position-relative" style="width: 45%; min-height: 350px;">
-            <!-- Back layer card -->
-            <div class="card flashcard bg-secondary text-light border-light position-absolute"
-                style="top: 10px; left: 10px">
-            </div>
-            <!-- Middle layer card -->
-            <div class="card flashcard bg-secondary text-light border-light position-absolute"
-                style="top: 5px; left: 5px">
-            </div>
-            <!-- Front card -->
-            <div class="card flashcard bg-secondary text-light border-light">
-                <div class="p-3 text-center">
-                    <h5 class="card-title" style="font-size: 1.75rem;">Back</h5>
-                </div>
+            <p class="feedback" *ngIf="feedback">{{ feedback }}</p>
 
-                <!-- Input field centered using position-absolute -->
-                <div class="position-absolute top-50 start-50 translate-middle" style="width: 80%;">
-                    <input type="text" class="form-control" style="font-size: 1.25rem;" [(ngModel)]="answer"
-                        placeholder="Enter your answer" (keydown.enter)="submitAnswer()"
-                        [disabled]="isForceCorrectAnswer && isAnsweredCorrectly" />
-                </div>
-
-                <!-- Submit button and feedback message at the bottom -->
-                <div class="d-flex flex-column justify-content-center align-items-center p-3"
-                    style="width: 100%; position: absolute; bottom: 0;">
-                    <!-- Feedback -->
-                    <div class="" style="min-height: 1.5rem;">
-                        <p *ngIf="feedback" class="text-light" style="font-size: 1.25rem;">
-                            {{ feedback }}
-                        </p>
-                    </div>
-                    <button (click)="submitAnswer()" class="btn btn-success" style="font-size: 1.5rem;">Submit</button>
-                </div>
+            <div class="rating-actions">
+                <button class="again" (click)="markAgain()">
+                    <span class="material-icons">replay</span>
+                    Again
+                    <small>Needs work</small>
+                </button>
+                <button class="good" (click)="markGood()">
+                    <span class="material-icons">radio_button_unchecked</span>
+                    Good
+                    <small>Got it</small>
+                </button>
+                <button class="easy" (click)="markEasy()">
+                    <span class="material-icons">check_circle</span>
+                    Easy
+                    <small>Well known</small>
+                </button>
             </div>
-        </div>
+        </main>
+
+        <app-study-insights [masteryScore]="masteryScore" [dueCount]="flashcards.length"
+            [streakDays]="streakDays" [weekActivity]="weekActivity" [upcomingCards]="upcomingCards">
+        </app-study-insights>
     </div>
 
-    <!-- Edit Flashcard Modal -->
     <app-edit-flashcard-modal [flashcard]="editCard" [isVisible]="showEditModal" (save)="saveEdit($event)"
         (close)="hideEditModal()">
     </app-edit-flashcard-modal>
-</div>
+</section>

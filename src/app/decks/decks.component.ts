@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core'
 
 import { FlashService } from '../flash.service'
-import { Flashcard, GoogleSheetsService } from '../google-sheets.service'
+import { Flashcard } from '../google-sheets.service'
 
 interface SortConfig {
     column: string
@@ -52,13 +52,18 @@ export class DecksComponent implements OnInit {
         return this.sortFlashcards(cards)
     }
 
-    constructor(
-        private _flashService: FlashService,
-        private _sheetsService: GoogleSheetsService
-    ) { }
+    get canCreateCard(): boolean {
+        return !!this.newCard.front.trim() && !!this.newCard.back.trim()
+    }
+
+    get isFiltered(): boolean {
+        return !!this.activeTagFilter || !!this.searchQuery.trim()
+    }
+
+    constructor(private _flashService: FlashService) { }
 
     ngOnInit() {
-        this._flashService.initialize()
+        queueMicrotask(() => this._flashService.initialize())
     }
 
     onDeckSelect(deckId: number) {
@@ -104,6 +109,11 @@ export class DecksComponent implements OnInit {
         }
     }
 
+    getSortDirection(column: string): 'ascending' | 'descending' | 'none' {
+        if (this.sortConfig.column !== column) return 'none'
+        return this.sortConfig.direction === 'asc' ? 'ascending' : 'descending'
+    }
+
     private getValueByColumn(card: Flashcard, column: string): any {
         switch (column) {
             case 'front': return card.front
@@ -111,13 +121,9 @@ export class DecksComponent implements OnInit {
             case 'correct': return card.correctCount
             case 'incorrect': return card.incorrectCount
             case 'lastCorrect': return card.lastCorrectDate ? new Date(card.lastCorrectDate) : null
-            case 'tags': return this.getTagsCount(card.tags)
+            case 'tags': return this.getTags(card.tags).join(', ').toLocaleLowerCase()
             default: return ''
         }
-    }
-
-    private getTagsCount(tagsString: string): number {
-        return this.getTags(tagsString).length
     }
 
     private compare(a: any, b: any): number {
@@ -222,14 +228,13 @@ export class DecksComponent implements OnInit {
     }
 
     createCard() {
-        if (!this.newCard.front || !this.newCard.back) return
+        if (!this.canCreateCard) return
 
         this._flashService.createFlashcard(
-            this.newCard.front,
-            this.newCard.back,
-            this.newCard.tags
-        )
-        this.hideCreateCardModal()
+            this.newCard.front.trim(),
+            this.newCard.back.trim(),
+            this.newCard.tags.trim()
+        ).subscribe(() => this.hideCreateCardModal())
     }
 
     editFlashcard(card: Flashcard) {
@@ -239,7 +244,7 @@ export class DecksComponent implements OnInit {
     }
 
     deleteFlashcard(card: Flashcard) {
-        if (!this.currentDeck || !this._flashService.spreadsheetId) return
+        if (!this.currentDeck) return
 
         if (this.dontAskAgain) {
             this.performDelete(card)
@@ -257,14 +262,7 @@ export class DecksComponent implements OnInit {
     }
 
     private performDelete(card: Flashcard) {
-        const index = this.flashcards.indexOf(card)
-        this._sheetsService.deleteFlashcard(
-            this._flashService.spreadsheetId!,
-            this.currentDeck!.name,
-            index
-        ).subscribe(() => {
-            this._flashService.selectDeck(this.currentDeck!.id)
-        })
+        this._flashService.deleteFlashcard(card).subscribe()
     }
 
     hideDeleteModal() {
@@ -275,14 +273,7 @@ export class DecksComponent implements OnInit {
     saveEdit(updatedFlashcard: Flashcard) {
         if (!this.currentFlashcard) return
 
-        const index = this.flashcards.indexOf(this.currentFlashcard)
-        this._sheetsService.updateFlashcard(
-            this._flashService.spreadsheetId!,
-            this.currentDeck!.name,
-            index,
-            updatedFlashcard
-        ).subscribe(() => {
-            this._flashService.selectDeck(this.currentDeck!.id)
+        this._flashService.updateFlashcard(this.currentFlashcard, updatedFlashcard).subscribe(() => {
             this.hideEditModal()
         })
     }
@@ -292,4 +283,4 @@ export class DecksComponent implements OnInit {
         this.editCard = null
         this.currentFlashcard = null
     }
-} 
+}

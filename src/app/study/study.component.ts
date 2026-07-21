@@ -1,7 +1,9 @@
-import { Component, OnDestroy, OnInit } from '@angular/core'
+import { Component, HostListener, OnDestroy, OnInit } from '@angular/core'
+import { ActivatedRoute } from '@angular/router'
+import { Subscription } from 'rxjs'
 
-import { FlashService } from '../flash.service'
-import { Flashcard, GoogleSheetsService } from '../google-sheets.service'
+import { FlashService, StudyMode } from '../flash.service'
+import { Flashcard } from '../google-sheets.service'
 
 @Component({
   selector: 'app-study',
@@ -17,6 +19,10 @@ export class StudyComponent implements OnDestroy, OnInit {
   public editCard: Flashcard | null = null
   public isRevealed = false
   public isFullscreen = false
+  public studyMode: StudyMode = 'flashcards'
+  public actionMessage = ''
+  private _modeSubscription?: Subscription
+  private _messageTimer?: ReturnType<typeof setTimeout>
 
   get decks() {
     return this._flashService.decks
@@ -46,6 +52,10 @@ export class StudyComponent implements OnDestroy, OnInit {
     return this._flashService.flashcards
   }
 
+  get studyCards() {
+    return this._flashService.studyCards
+  }
+
   get isAnsweredCorrectly() {
     return this._flashService.isAnsweredCorrectly
   }
@@ -61,7 +71,7 @@ export class StudyComponent implements OnDestroy, OnInit {
 
   get currentCardIndex(): number {
     if (!this.currentFlashcard) return 0
-    const index = this.flashcards.indexOf(this.currentFlashcard)
+    const index = this.studyCards.indexOf(this.currentFlashcard)
     return index >= 0 ? index + 1 : 1
   }
 
@@ -111,15 +121,20 @@ export class StudyComponent implements OnDestroy, OnInit {
   }
 
   get upcomingCards(): Flashcard[] {
-    if (!this.flashcards.length) return []
-    return this.flashcards
+    if (!this.studyCards.length) return []
+    return this.studyCards
       .filter(card => card !== this.currentFlashcard)
       .slice(0, 5)
   }
 
   get studyFocusLabel(): string {
-    const alternateDeck = this.decks.find(deck => deck.id !== this.currentDeck?.id)
-    return alternateDeck?.name || this.tags[0] || 'Review'
+    if (this.studyMode === 'review') return 'Review missed cards'
+    if (this.studyMode === 'learn') return 'Learn least-practiced'
+    return 'All cards'
+  }
+
+  get canSpeak(): boolean {
+    return 'speechSynthesis' in window
   }
 
   get isBookmarked(): boolean {
@@ -129,40 +144,43 @@ export class StudyComponent implements OnDestroy, OnInit {
 
   constructor(
     private _flashService: FlashService,
-    private _sheetsService: GoogleSheetsService
+    private _route: ActivatedRoute
   ) { }
 
   ngOnInit() {
-    this._flashService.initialize()
-    document.addEventListener('fullscreenchange', this.onFullscreenChange)
+    this._modeSubscription = this._route.queryParamMap.subscribe(params => {
+      const requestedMode = params.get('mode')
+      this.studyMode = requestedMode === 'review' || requestedMode === 'learn'
+        ? requestedMode
+        : 'flashcards'
+      this.isRevealed = false
+      this._flashService.setStudyMode(this.studyMode)
+    })
 
-    // Try to get the last selected deck first
-    const lastSelectedDeckId = this._flashService.getLastSelectedDeckId()
-    if (lastSelectedDeckId) {
-      this.selectedDeckId = lastSelectedDeckId
-      this._flashService.selectDeck(lastSelectedDeckId)
-    } else if (this.currentDeck) {
-      // Fallback to current deck if no last selected
-      this.selectedDeckId = this.currentDeck.id
-    } else if (this.decks.length > 0) {
-      // If no last selected and no current deck, select the first deck
-      this.selectedDeckId = this.decks[0].id
-      this._flashService.selectDeck(this.decks[0].id)
-    }
+    queueMicrotask(() => this._flashService.initialize())
+    document.addEventListener('fullscreenchange', this.onFullscreenChange)
   }
 
-  onDeckChange() {
-    if (this.selectedDeckId && this.selectedDeckId !== this.currentDeck?.id) {
+  onDeckChange(deckId: number) {
+    this.selectedDeckId = deckId
+    if (deckId && deckId !== this.currentDeck?.id) {
       this.isRevealed = false
-      this._flashService.selectDeck(this.selectedDeckId)
+      this._flashService.selectDeck(deckId)
     }
   }
 
   ngOnDestroy() {
     document.removeEventListener('fullscreenchange', this.onFullscreenChange)
+    this._modeSubscription?.unsubscribe()
+    if (this._messageTimer) clearTimeout(this._messageTimer)
   }
 
   submitAnswer() {
+    if (!this.answer.trim()) {
+      this.showAction('Type an answer first, or rate the revealed card.')
+      return
+    }
+
     this.recordStudyActivity()
     this._flashService.submitAnswer()
     this.answer = ''
@@ -171,25 +189,34 @@ export class StudyComponent implements OnDestroy, OnInit {
 
   revealAnswer() {
     this.isRevealed = true
+    this.showAction('Answer revealed. Rate the card when you are ready.')
   }
 
   markAgain() {
     if (!this.currentFlashcard) return
     this.recordStudyActivity()
     this.answer = ''
-    this._flashService.submitAnswer()
-    this.isRevealed = true
+    this._flashService.gradeCurrentCard('again')
+    this.isRevealed = false
+    this.showAction('Card marked for another review.')
   }
 
   markGood() {
     if (!this.currentFlashcard) return
     this.recordStudyActivity()
-    this.answer = this.currentFlashcard.back
-    this.submitAnswer()
+    this.answer = ''
+    this._flashService.gradeCurrentCard('good')
+    this.isRevealed = false
+    this.showAction('Card marked good.')
   }
 
   markEasy() {
-    this.markGood()
+    if (!this.currentFlashcard) return
+    this.recordStudyActivity()
+    this.answer = ''
+    this._flashService.gradeCurrentCard('easy')
+    this.isRevealed = false
+    this.showAction('Card marked easy and lowered in priority.')
   }
 
   openEditModal() {
@@ -205,6 +232,7 @@ export class StudyComponent implements OnDestroy, OnInit {
   clearAnswer() {
     this.answer = ''
     this.showOptionsPanel = false
+    this.showAction('Answer cleared.')
   }
 
   shuffleCard() {
@@ -218,9 +246,12 @@ export class StudyComponent implements OnDestroy, OnInit {
 
     const text = `${this.currentFlashcard.front} - ${this.currentFlashcard.back}`
     try {
-      await navigator.clipboard?.writeText(text)
+      if (!navigator.clipboard) throw new Error('Clipboard unavailable')
+      await navigator.clipboard.writeText(text)
+      this.showAction('Card copied.')
     } catch {
       window.prompt('Copy this card:', text)
+      this.showAction('Card ready to copy.')
     }
     this.showOptionsPanel = false
   }
@@ -235,10 +266,15 @@ export class StudyComponent implements OnDestroy, OnInit {
       : [...bookmarks, key]
 
     localStorage.setItem(this.BOOKMARKS_KEY, JSON.stringify(nextBookmarks))
+    this.showAction(nextBookmarks.includes(key) ? 'Card bookmarked.' : 'Bookmark removed.')
   }
 
   speakCard() {
-    if (!this.currentFlashcard || !('speechSynthesis' in window)) return
+    if (!this.currentFlashcard) return
+    if (!this.canSpeak) {
+      this.showAction('Read aloud is not supported by this browser.')
+      return
+    }
 
     window.speechSynthesis.cancel()
     const text = this.isRevealed
@@ -247,6 +283,7 @@ export class StudyComponent implements OnDestroy, OnInit {
     const utterance = new SpeechSynthesisUtterance(text)
     utterance.lang = this.currentDeck?.name.toLowerCase().includes('japanese') ? 'ja-JP' : 'en-US'
     window.speechSynthesis.speak(utterance)
+    this.showAction('Reading card aloud.')
   }
 
   async toggleFullscreen() {
@@ -260,7 +297,22 @@ export class StudyComponent implements OnDestroy, OnInit {
       await (studyPage || document.documentElement).requestFullscreen()
     } catch {
       this.showOptionsPanel = false
+      this.showAction('Fullscreen is unavailable in this browser.')
     }
+  }
+
+  @HostListener('document:click', ['$event'])
+  closeOptionsOnOutsideClick(event: Event) {
+    const target = event.target as Element | null
+    if (this.showOptionsPanel && !target?.closest('.toolbar-actions')) {
+      this.showOptionsPanel = false
+    }
+  }
+
+  @HostListener('document:keydown.escape')
+  closeOverlays() {
+    this.showOptionsPanel = false
+    if (this.showEditModal) this.hideEditModal()
   }
 
   private onFullscreenChange = () => {
@@ -313,7 +365,18 @@ export class StudyComponent implements OnDestroy, OnInit {
   }
 
   private toDateKey(date: Date): string {
-    return date.toISOString().slice(0, 10)
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+  }
+
+  private showAction(message: string) {
+    this.actionMessage = message
+    if (this._messageTimer) clearTimeout(this._messageTimer)
+    this._messageTimer = setTimeout(() => {
+      this.actionMessage = ''
+    }, 2400)
   }
 
   hideEditModal() {
@@ -324,15 +387,12 @@ export class StudyComponent implements OnDestroy, OnInit {
   saveEdit(updatedFlashcard: Flashcard) {
     if (!this.currentFlashcard) return
 
-    const index = this.flashcards.indexOf(this.currentFlashcard)
-    this._sheetsService.updateFlashcard(
-      this._flashService.spreadsheetId!,
-      this.currentDeck!.name,
-      index,
-      updatedFlashcard
-    ).subscribe(() => {
-      this._flashService.selectDeck(this.currentDeck!.id)
-      this.hideEditModal()
+    this._flashService.updateFlashcard(this.currentFlashcard, updatedFlashcard).subscribe({
+      next: () => {
+        this.hideEditModal()
+        this.showAction('Card updated.')
+      },
+      error: () => this.showAction('Card could not be updated. Try again.')
     })
   }
 }

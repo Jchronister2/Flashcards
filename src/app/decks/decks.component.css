@@ -68,6 +68,45 @@
     color: inherit;
 }
 
+.deck-title-row,
+.rename-deck-form {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.rename-deck-button,
+.rename-deck-form button {
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: #52657a;
+    cursor: pointer;
+}
+
+.rename-deck-button:hover,
+.rename-deck-form button:hover {
+    background: #eaf2ff;
+    color: #155eef;
+}
+
+.rename-deck-form input {
+    width: min(280px, 60vw);
+    height: 40px;
+    padding: 0 10px;
+    border: 1px solid #bfd4ff;
+    border-radius: 6px;
+    outline: 0;
+    color: #24364b;
+    font-size: 18px;
+    font-weight: 720;
+}
+
 .flashcards-table {
     padding: 24px;
     overflow-x: auto;
@@ -182,6 +221,20 @@ th {
     font-weight: 780;
     letter-spacing: 0.06em;
     text-transform: uppercase;
+    cursor: default;
+}
+
+.sort-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-weight: inherit;
+    text-transform: inherit;
     cursor: pointer;
 }
 
@@ -207,6 +260,7 @@ tr:hover td {
 
 .tag {
     padding: 4px 10px;
+    border: 0;
     cursor: pointer;
 }
 
@@ -307,4 +361,49 @@ tr:hover td {
     .table-header {
         flex-direction: column;
     }
+}
+
+:host-context(.dark-theme) .decks-container {
+    background: #0b1220;
+}
+
+:host-context(.dark-theme) .deck-list,
+:host-context(.dark-theme) .flashcards-table,
+:host-context(.dark-theme) .empty-state,
+:host-context(.dark-theme) table,
+:host-context(.dark-theme) .modal-content {
+    border-color: #26364d;
+    background: #111c2f;
+}
+
+:host-context(.dark-theme) .deck-list h2,
+:host-context(.dark-theme) .flashcards-table h3,
+:host-context(.dark-theme) td,
+:host-context(.dark-theme) .form-group label,
+:host-context(.dark-theme) .modal-header,
+:host-context(.dark-theme) .modal-body {
+    color: #dbe7f6;
+}
+
+:host-context(.dark-theme) th,
+:host-context(.dark-theme) tr:hover td,
+:host-context(.dark-theme) .search-container {
+    background: #172033;
+    color: #98a8bd;
+}
+
+:host-context(.dark-theme) td,
+:host-context(.dark-theme) th,
+:host-context(.dark-theme) .modal-header,
+:host-context(.dark-theme) .modal-footer {
+    border-color: #26364d;
+}
+
+:host-context(.dark-theme) .deck-button,
+:host-context(.dark-theme) .search-input,
+:host-context(.dark-theme) .rename-deck-form input,
+:host-context(.dark-theme) .form-control {
+    border-color: #2d405b;
+    background: #111c2f;
+    color: #dbe7f6;
 }

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core'
+import { Component, ElementRef, HostListener } from '@angular/core'
 import { Router } from '@angular/router'
 
 import { GoogleAuthService } from '../google-auth.service'
@@ -17,7 +17,8 @@ export class ProfileComponent {
 
     constructor(
         private _authService: GoogleAuthService,
-        private _router: Router
+        private _router: Router,
+        private _elementRef: ElementRef<HTMLElement>
     ) { }
 
     toggleMenu() {
@@ -26,6 +27,18 @@ export class ProfileComponent {
 
     closeMenu() {
         this.isMenuOpen = false
+    }
+
+    @HostListener('document:click', ['$event'])
+    closeMenuOnOutsideClick(event: Event) {
+        if (!this._elementRef.nativeElement.contains(event.target as Node)) {
+            this.closeMenu()
+        }
+    }
+
+    @HostListener('document:keydown.escape')
+    closeMenuOnEscape() {
+        this.closeMenu()
     }
 
     onLogout() {
@@ -44,6 +57,10 @@ export class ProfileComponent {
             window.prompt('Copy this URL into Codex preview:', url)
             this.copyStatus = 'Ready'
         }
+
+        setTimeout(() => {
+            this.copyStatus = ''
+        }, 2000)
     }
 
     handleImageError(event: Event) {

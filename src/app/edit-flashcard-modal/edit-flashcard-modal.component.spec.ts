@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { FormsModule } from '@angular/forms';
 
 import { EditFlashcardModalComponent } from './edit-flashcard-modal.component';
 
@@ -8,6 +9,7 @@ describe('EditFlashcardModalComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
+      imports: [FormsModule],
       declarations: [EditFlashcardModalComponent]
     });
     fixture = TestBed.createComponent(EditFlashcardModalComponent);

@@ -13,6 +13,8 @@ import { GoogleAuthService } from './google-auth.service'
 export class AppComponent implements OnInit {
   private readonly THEME_KEY = 'flashcards_theme'
   isDarkMode = false
+  showCreateDeckForm = false
+  newDeckName = ''
 
   get flashcards() { return this._flashService.flashcards }
   get decks() { return this._flashService.decks }
@@ -22,6 +24,11 @@ export class AppComponent implements OnInit {
   get dueCount() { return this.flashcards.length || 0 }
   get isStudyRoute() { return this._router.url.includes('/study') }
   get isDeckRoute() { return this._router.url.includes('/decks') }
+  get isReviewMode() { return this.isStudyRoute && this._router.url.includes('mode=review') }
+  get isLearnMode() { return this.isStudyRoute && this._router.url.includes('mode=learn') }
+  get isFlashcardsMode() { return this.isStudyRoute && !this.isReviewMode && !this.isLearnMode }
+  get syncLabel() { return this._authService.isPreviewMode ? 'Preview data' : 'Google Sheets connected' }
+  get syncIcon() { return this._authService.isPreviewMode ? 'science' : 'cloud_done' }
 
   constructor(
     private _authService: GoogleAuthService,
@@ -40,6 +47,29 @@ export class AppComponent implements OnInit {
   toggleTheme() {
     this.isDarkMode = !this.isDarkMode
     localStorage.setItem(this.THEME_KEY, this.isDarkMode ? 'dark' : 'light')
+  }
+
+  selectDeck(deckId: number) {
+    this._flashService.selectDeck(deckId)
+    this._router.navigate(['/study'])
+  }
+
+  openCreateDeckForm() {
+    this.showCreateDeckForm = true
+    this.newDeckName = ''
+  }
+
+  closeCreateDeckForm() {
+    this.showCreateDeckForm = false
+    this.newDeckName = ''
+  }
+
+  createDeck() {
+    const name = this.newDeckName.trim()
+    if (!name) return
+
+    this._flashService.createDeck(name)
+    this.closeCreateDeckForm()
   }
 
   onLogin() {

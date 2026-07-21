@@ -1,8 +1,9 @@
 <div class="modal" *ngIf="isVisible">
-    <div class="modal-content">
+    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="edit-card-title">
         <div class="modal-header">
-            <h4>Edit Flashcard</h4>
-            <button class="close-btn" (click)="onClose()">
+            <h4 id="edit-card-title">Edit Flashcard</h4>
+            <button type="button" class="close-btn" title="Close edit card dialog"
+                aria-label="Close edit card dialog" (click)="onClose()">
                 <span class="material-icons">close</span>
             </button>
         </div>
@@ -21,9 +22,9 @@
             </div>
         </div>
         <div class="modal-footer">
-            <button class="btn btn-secondary" (click)="onClose()">Cancel</button>
-            <button class="btn btn-primary" (click)="onSave()"
-                [disabled]="!editedFlashcard?.front || !editedFlashcard?.back">Save</button>
+            <button type="button" class="btn btn-secondary" (click)="onClose()">Cancel</button>
+            <button type="button" class="btn btn-primary" (click)="onSave()"
+                [disabled]="!editedFlashcard.front.trim() || !editedFlashcard.back.trim()">Save</button>
         </div>
     </div>
 </div>

@@ -54,6 +54,17 @@
     border-color: #2d405b;
 }
 
+.app-shell.dark-theme .nav-label-action,
+.app-shell.dark-theme .create-deck-form button {
+    color: #8bbcff;
+}
+
+.app-shell.dark-theme .create-deck-form input {
+    border-color: #2d405b;
+    background: #111c2f;
+    color: #dbe7f6;
+}
+
 .app-shell.dark-theme .top-tabs a.active,
 .app-shell.dark-theme .item-count {
     color: #7db3ff;
@@ -119,6 +130,66 @@
 .nav-label .material-icons {
     font-size: 18px;
     color: #315070;
+}
+
+.nav-label-action {
+    width: 28px;
+    height: 28px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: #315070;
+    cursor: pointer;
+}
+
+.nav-label-action:hover {
+    background: #eaf2ff;
+    color: #155eef;
+}
+
+.create-deck-form {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 32px 32px;
+    gap: 4px;
+    padding: 4px 8px 6px;
+}
+
+.create-deck-form input {
+    min-width: 0;
+    height: 34px;
+    padding: 0 9px;
+    border: 1px solid #bfd4ff;
+    border-radius: 6px;
+    outline: 0;
+    color: #24364b;
+}
+
+.create-deck-form input:focus {
+    border-color: #1769e8;
+    box-shadow: 0 0 0 3px rgba(23, 105, 232, 0.12);
+}
+
+.create-deck-form button {
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    border-radius: 6px;
+    background: #eaf2ff;
+    color: #155eef;
+    cursor: pointer;
+}
+
+.create-deck-form button:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+}
+
+.create-deck-form .material-icons {
+    font-size: 18px;
 }
 
 .side-nav-item,

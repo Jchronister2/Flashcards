@@ -1,13 +1,15 @@
-<div class="profile-container" (clickOutside)="closeMenu()">
-    <div class="profile-button" (click)="toggleMenu()">
-        <img [src]="user?.picture" alt="Profile Picture" (error)="handleImageError($event)" class="profile-image">
+<div class="profile-container">
+    <button type="button" class="profile-button" (click)="toggleMenu()" aria-haspopup="menu"
+        [attr.aria-expanded]="isMenuOpen" aria-label="Open account menu">
+        <img [src]="user?.picture" [alt]="(user?.name || 'User') + ' profile picture'"
+            (error)="handleImageError($event)" class="profile-image">
         <span class="profile-name">{{ user?.name }}</span>
         <span class="material-icons expand-icon" [class.open]="isMenuOpen">
             expand_more
         </span>
-    </div>
+    </button>
 
-    <div class="profile-menu" *ngIf="isMenuOpen">
+    <div class="profile-menu" *ngIf="isMenuOpen" role="menu" aria-label="Account menu">
         <div class="menu-header">
             <img [src]="user?.picture" alt="Profile Picture" (error)="handleImageError($event)"
                 class="menu-profile-image">
@@ -17,11 +19,12 @@
             </div>
         </div>
         <div class="menu-divider"></div>
-        <button *ngIf="canCopyCodexLoginLink" class="copy-login-button" (click)="copyCodexLoginLink()">
+        <button type="button" *ngIf="canCopyCodexLoginLink" class="copy-login-button"
+            (click)="copyCodexLoginLink()">
             <span class="material-icons">link</span>
             {{ copyStatus || 'Copy Codex login link' }}
         </button>
-        <button class="logout-button" (click)="onLogout()">
+        <button type="button" class="logout-button" (click)="onLogout()">
             <span class="material-icons">logout</span>
             Sign out
         </button>

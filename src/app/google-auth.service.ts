@@ -45,6 +45,11 @@ export class GoogleAuthService {
     setInterval(() => this.checkTokenExpiration(), 60000) // Check every minute
   }
 
+  get isPreviewMode(): boolean {
+    const token = localStorage.getItem(TOKEN_KEY)
+    return !!token && this.isPreviewToken(token)
+  }
+
   private importTokenFromUrlFragment() {
     if (!this.isLocalDevOrigin() || !window.location.hash) return
 
@@ -117,9 +122,10 @@ export class GoogleAuthService {
   }
 
   initializeClient() {
-    this._tokenClient = window.google.accounts.oauth2.initTokenClient({
+    const oauth2 = window.google.accounts.oauth2 as any
+    this._tokenClient = oauth2.initTokenClient({
       client_id: CLIENT_ID,
-      scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile',
+      scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
       callback: (tokenResponse: any) => {
         if (tokenResponse && tokenResponse.access_token) {
           // Store token expiry time (current time + expires_in seconds)
@@ -144,6 +150,10 @@ export class GoogleAuthService {
   }
 
   signIn() {
+    if (!this._tokenClient && window.google) {
+      this.initializeClient()
+    }
+
     if (this._tokenClient) {
       this._tokenClient.requestAccessToken({
         prompt: 'consent'
@@ -158,12 +168,19 @@ export class GoogleAuthService {
     if (this._router.url !== '/login') {
       this._lastRoute = this._router.url
     }
+    const token = localStorage.getItem(TOKEN_KEY)
     this.user$.next(null)
     localStorage.removeItem(TOKEN_KEY)
     localStorage.removeItem(TOKEN_EXPIRY_KEY)
-    window.google?.accounts.oauth2.revoke(localStorage.getItem(TOKEN_KEY) || '', () => {
-      this._router.navigate(['/login'])
-    })
+    this._router.navigate(['/login'])
+
+    const oauth2 = window.google?.accounts?.oauth2 as any
+    if (token && oauth2?.revoke) {
+      try {
+        oauth2.revoke(token, () => undefined)
+      } catch {
+      }
+    }
   }
 
   fetchUserInfo(accessToken: string) {

@@ -26,6 +26,35 @@ export class GoogleSheetsService {
   private readonly SPREADSHEET_ID_KEY = 'flashcards_spreadsheet_id'
   private readonly LAST_DECK_KEY = 'flashcards_last_deck'
   private readonly API_URL = 'https://sheets.googleapis.com/v4/spreadsheets'
+  private _previewDecks: Deck[] = [
+    { id: 1, name: 'Japanese' },
+    { id: 2, name: 'Hiragana' },
+    { id: 3, name: 'Vocabulary' }
+  ]
+  private _previewCards: Record<string, Flashcard[]> = {
+    Japanese: [
+      { front: '行く', back: 'to go', correctCount: 7, incorrectCount: 3, lastCorrectDate: null, tags: 'verb' },
+      { front: '食べる', back: 'to eat', correctCount: 11, incorrectCount: 1, lastCorrectDate: new Date().toISOString(), tags: 'verb' },
+      { front: '見る', back: 'to see', correctCount: 4, incorrectCount: 2, lastCorrectDate: null, tags: 'verb' },
+      { front: '来る', back: 'to come', correctCount: 6, incorrectCount: 3, lastCorrectDate: null, tags: 'verb' },
+      { front: 'する', back: 'to do', correctCount: 9, incorrectCount: 2, lastCorrectDate: new Date().toISOString(), tags: 'verb' }
+    ],
+    Hiragana: [
+      { front: 'あ', back: 'a', correctCount: 12, incorrectCount: 1, lastCorrectDate: new Date().toISOString(), tags: 'vowel' },
+      { front: 'い', back: 'i', correctCount: 10, incorrectCount: 2, lastCorrectDate: null, tags: 'vowel' },
+      { front: 'う', back: 'u', correctCount: 8, incorrectCount: 2, lastCorrectDate: null, tags: 'vowel' },
+      { front: 'え', back: 'e', correctCount: 6, incorrectCount: 3, lastCorrectDate: null, tags: 'vowel' },
+      { front: 'お', back: 'o', correctCount: 7, incorrectCount: 1, lastCorrectDate: null, tags: 'vowel' }
+    ],
+    Vocabulary: [
+      { front: 'turn', back: 'mawaru', correctCount: 8, incorrectCount: 2, lastCorrectDate: new Date().toISOString(), tags: 'verb' },
+      { front: 'rest', back: 'yasumu', correctCount: 2, incorrectCount: 3, lastCorrectDate: null, tags: 'verb' },
+      { front: 'book', back: 'hon', correctCount: 5, incorrectCount: 1, lastCorrectDate: null, tags: 'noun' },
+      { front: 'water', back: 'mizu', correctCount: 3, incorrectCount: 2, lastCorrectDate: null, tags: 'noun' },
+      { front: 'tomorrow', back: 'ashita', correctCount: 0, incorrectCount: 0, lastCorrectDate: null, tags: 'time' },
+      { front: 'friend', back: 'tomodachi', correctCount: 1, incorrectCount: 1, lastCorrectDate: null, tags: 'people' }
+    ]
+  }
 
   constructor(private _http: HttpClient) {
     console.log('GoogleSheetsService initialized')
@@ -134,22 +163,20 @@ export class GoogleSheetsService {
       headers: this.getHeaders()
     }).pipe(
       tap(response => console.log('Spreadsheet created:', response)),
-      map((response: any) => {
+      switchMap((response: any) => {
         const spreadsheetId = response.spreadsheetId
-        console.log('New spreadsheet ID:', spreadsheetId)
+        const firstSheetName = response.sheets?.[0]?.properties?.title || 'Sheet1'
         localStorage.setItem(this.SPREADSHEET_ID_KEY, spreadsheetId)
-        return spreadsheetId
+        return this.writeDeckHeaders(spreadsheetId, firstSheetName).pipe(
+          map(() => spreadsheetId)
+        )
       })
     )
   }
 
   getDecks(spreadsheetId: string): Observable<Deck[]> {
     if (this.isPreviewMode()) {
-      return of([
-        { id: 1, name: 'Japanese' },
-        { id: 2, name: 'Hiragana' },
-        { id: 3, name: 'Vocabulary' }
-      ])
+      return of(this._previewDecks.map(deck => ({ ...deck })))
     }
 
     console.log('Getting decks for spreadsheet:', spreadsheetId)
@@ -158,8 +185,8 @@ export class GoogleSheetsService {
     }).pipe(
       tap(response => console.log('Spreadsheet details:', response)),
       map((response: any) => {
-        const decks = response.sheets.map((sheet: any, index: number) => ({
-          id: index + 1,
+        const decks = response.sheets.map((sheet: any) => ({
+          id: sheet.properties.sheetId,
           name: sheet.properties.title
         }))
         console.log('Found decks:', decks)
@@ -170,18 +197,11 @@ export class GoogleSheetsService {
 
   getFlashcards(spreadsheetId: string, deckName: string): Observable<Flashcard[]> {
     if (this.isPreviewMode()) {
-      return of([
-        { front: 'turn', back: 'mawaru', correctCount: 8, incorrectCount: 2, lastCorrectDate: new Date().toISOString(), tags: 'verb' },
-        { front: '行く', back: 'to go', correctCount: 7, incorrectCount: 3, lastCorrectDate: null, tags: 'verb' },
-        { front: '食べる', back: 'to eat', correctCount: 11, incorrectCount: 1, lastCorrectDate: new Date().toISOString(), tags: 'verb' },
-        { front: '見る', back: 'to see', correctCount: 4, incorrectCount: 2, lastCorrectDate: null, tags: 'verb' },
-        { front: '来る', back: 'to come', correctCount: 6, incorrectCount: 3, lastCorrectDate: null, tags: 'verb' },
-        { front: 'する', back: 'to do', correctCount: 9, incorrectCount: 2, lastCorrectDate: new Date().toISOString(), tags: 'verb' }
-      ])
+      return of((this._previewCards[deckName] || []).map(card => ({ ...card })))
     }
 
     console.log('Getting flashcards for deck:', deckName)
-    return this._http.get(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${deckName}!A2:F`, {
+    return this._http.get(this.valuesUrl(spreadsheetId, deckName, 'A2:F'), {
       headers: this.getHeaders()
     }).pipe(
       tap(response => console.log('Raw flashcard data:', response)),
@@ -202,10 +222,14 @@ export class GoogleSheetsService {
   }
 
   updateFlashcard(spreadsheetId: string, deckName: string, index: number, flashcard: Flashcard): Observable<any> {
-    if (this.isPreviewMode()) return of({})
+    if (this.isPreviewMode()) {
+      const cards = this._previewCards[deckName] || []
+      if (index >= 0 && index < cards.length) cards[index] = { ...flashcard }
+      return of({})
+    }
 
     console.log('Updating flashcard:', { deckName, index, flashcard })
-    const range = `${deckName}!A${index + 2}:F${index + 2}`
+    const range = `A${index + 2}:F${index + 2}`
     const values = [[
       flashcard.front,
       flashcard.back,
@@ -215,7 +239,7 @@ export class GoogleSheetsService {
       flashcard.tags
     ]]
 
-    return this._http.put(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${range}`, {
+    return this._http.put(this.valuesUrl(spreadsheetId, deckName, range), {
       values,
       majorDimension: 'ROWS'
     }, {
@@ -229,7 +253,11 @@ export class GoogleSheetsService {
   }
 
   deleteFlashcard(spreadsheetId: string, deckName: string, index: number): Observable<any> {
-    if (this.isPreviewMode()) return of({})
+    if (this.isPreviewMode()) {
+      const cards = this._previewCards[deckName] || []
+      if (index >= 0 && index < cards.length) cards.splice(index, 1)
+      return of({})
+    }
 
     console.log('Deleting flashcard:', { deckName, index })
     return this._http.get(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}`, {
@@ -261,7 +289,13 @@ export class GoogleSheetsService {
   }
 
   createDeck(spreadsheetId: string, name: string): Observable<Deck> {
-    if (this.isPreviewMode()) return of({ id: Date.now(), name })
+    if (this.isPreviewMode()) {
+      const id = Math.max(0, ...this._previewDecks.map(deck => deck.id)) + 1
+      const deck = { id, name }
+      this._previewDecks.push(deck)
+      this._previewCards[name] = []
+      return of({ ...deck })
+    }
 
     console.log('Creating new deck:', name)
     return this._http.post(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`, {
@@ -276,27 +310,37 @@ export class GoogleSheetsService {
       headers: this.getHeaders()
     }).pipe(
       tap(response => console.log('Create deck response:', response)),
-      map((response: any) => {
+      switchMap((response: any) => {
         const sheetId = response.replies[0].addSheet.properties.sheetId
         const deck = {
           id: sheetId,
           name
         }
-        console.log('Created deck:', deck)
-        return deck
+        return this.writeDeckHeaders(spreadsheetId, name).pipe(
+          map(() => deck)
+        )
       })
     )
   }
 
   renameDeck(spreadsheetId: string, deckId: number, newName: string): Observable<any> {
-    if (this.isPreviewMode()) return of({})
+    if (this.isPreviewMode()) {
+      const deck = this._previewDecks.find(item => item.id === deckId)
+      if (deck) {
+        const oldName = deck.name
+        deck.name = newName
+        this._previewCards[newName] = this._previewCards[oldName] || []
+        delete this._previewCards[oldName]
+      }
+      return of({})
+    }
 
     console.log('Renaming deck:', { deckId, newName })
     return this._http.post(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`, {
       requests: [{
         updateSheetProperties: {
           properties: {
-            sheetId: deckId - 1,
+            sheetId: deckId,
             title: newName
           },
           fields: 'title'
@@ -310,10 +354,13 @@ export class GoogleSheetsService {
   }
 
   createFlashcard(spreadsheetId: string, sheetName: string, flashcard: Flashcard): Observable<any> {
-    if (this.isPreviewMode()) return of({})
+    if (this.isPreviewMode()) {
+      const cards = this._previewCards[sheetName] || (this._previewCards[sheetName] = [])
+      cards.push({ ...flashcard })
+      return of({})
+    }
 
     console.log('Creating flashcard:', { sheetName, flashcard })
-    const range = `${sheetName}!A:F`
     const values = [[
       flashcard.front,
       flashcard.back,
@@ -323,7 +370,7 @@ export class GoogleSheetsService {
       flashcard.tags
     ]]
 
-    return this._http.post(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${range}:append`, {
+    return this._http.post(`${this.valuesUrl(spreadsheetId, sheetName, 'A:F')}:append`, {
       values,
       majorDimension: 'ROWS'
     }, {
@@ -342,6 +389,22 @@ export class GoogleSheetsService {
 
   setLastDeckName(name: string): void {
     localStorage.setItem(this.LAST_DECK_KEY, name)
+  }
+
+  private valuesUrl(spreadsheetId: string, sheetName: string, range: string): string {
+    const escapedName = sheetName.replace(/'/g, "''")
+    const a1Range = `'${escapedName}'!${range}`
+    return `${this.API_URL}/${spreadsheetId}/values/${encodeURIComponent(a1Range)}`
+  }
+
+  private writeDeckHeaders(spreadsheetId: string, sheetName: string): Observable<any> {
+    return this._http.put(this.valuesUrl(spreadsheetId, sheetName, 'A1:F1'), {
+      values: [['Front', 'Back', 'Correct', 'Incorrect', 'Last Correct', 'Tags']],
+      majorDimension: 'ROWS'
+    }, {
+      params: { valueInputOption: 'RAW' },
+      headers: this.getHeaders()
+    })
   }
 
   private isPreviewMode(): boolean {

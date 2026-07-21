@@ -3,17 +3,11 @@
     <div class="deck-list">
         <h2>Your Decks</h2>
         <div class="deck-buttons">
-            <button class="deck-button" *ngFor="let deck of decks" [class.active]="deck.id === currentDeck?.id"
-                (click)="onDeckSelect(deck.id)">
+            <button type="button" class="deck-button" *ngFor="let deck of decks"
+                [class.active]="deck.id === currentDeck?.id" (click)="onDeckSelect(deck.id)"
+                [title]="'Open ' + deck.name + ' deck'">
                 <span class="material-icons">style</span>
-                <ng-container *ngIf="isEditingDeckName && deck.id === currentDeck?.id">
-                    <input #deckNameInput [(ngModel)]="newDeckName" (keyup.enter)="saveDeckName()"
-                        (keyup.escape)="cancelEditingDeckName()" (blur)="saveDeckName()" class="deck-name-input"
-                        [attr.size]="newDeckName.length" autofocus>
-                </ng-container>
-                <ng-container *ngIf="!(isEditingDeckName && deck.id === currentDeck?.id)">
-                    <span (dblclick)="startEditingDeckName()">{{ deck.name }}</span>
-                </ng-container>
+                <span>{{ deck.name }}</span>
             </button>
         </div>
     </div>
@@ -22,7 +16,28 @@
     <div class="flashcards-table" *ngIf="currentDeck">
         <div class="table-header">
             <div class="header-left">
-                <h3>{{ currentDeck.name }}</h3>
+                <div class="deck-title-row" *ngIf="!isEditingDeckName; else renameDeckForm">
+                    <h3>{{ currentDeck.name }}</h3>
+                    <button type="button" class="rename-deck-button" (click)="startEditingDeckName()"
+                        [title]="'Rename ' + currentDeck.name + ' deck'"
+                        [attr.aria-label]="'Rename ' + currentDeck.name + ' deck'">
+                        <span class="material-icons">edit</span>
+                    </button>
+                </div>
+                <ng-template #renameDeckForm>
+                    <form class="rename-deck-form" (ngSubmit)="saveDeckName()">
+                        <input [(ngModel)]="newDeckName" name="deckName" aria-label="Deck name"
+                            (keydown.escape)="cancelEditingDeckName()" autofocus>
+                        <button type="submit" title="Save deck name" aria-label="Save deck name"
+                            [disabled]="!newDeckName.trim()">
+                            <span class="material-icons">check</span>
+                        </button>
+                        <button type="button" title="Cancel renaming deck" aria-label="Cancel renaming deck"
+                            (click)="cancelEditingDeckName()">
+                            <span class="material-icons">close</span>
+                        </button>
+                    </form>
+                </ng-template>
                 <div class="search-container">
                     <span class="material-icons">search</span>
                     <input type="text" [(ngModel)]="searchQuery" (ngModelChange)="onSearch()"
@@ -30,14 +45,15 @@
                 </div>
             </div>
             <div class="header-right">
-                <button class="btn btn-primary create-card-btn" (click)="showCreateCardModal()">
+                <button type="button" class="btn btn-primary create-card-btn" (click)="showCreateCardModal()">
                     <span class="material-icons">add</span>
                     Create Card
                 </button>
                 <div class="active-filter" *ngIf="activeTagFilter">
                     <span class="filter-tag">
                         Showing cards with tag: {{ activeTagFilter }}
-                        <button class="clear-filter" (click)="clearTagFilter()">
+                        <button type="button" class="clear-filter" title="Clear tag filter" aria-label="Clear tag filter"
+                            (click)="clearTagFilter()">
                             <span class="material-icons">close</span>
                         </button>
                     </span>
@@ -47,10 +63,11 @@
 
         <!-- Create Card Modal -->
         <div class="modal" *ngIf="showCreateModal">
-            <div class="modal-content">
+            <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="create-card-title">
                 <div class="modal-header">
-                    <h4>Create New Flashcard</h4>
-                    <button class="close-btn" (click)="hideCreateCardModal()">
+                    <h4 id="create-card-title">Create New Flashcard</h4>
+                    <button type="button" class="close-btn" title="Close create card dialog"
+                        aria-label="Close create card dialog" (click)="hideCreateCardModal()">
                         <span class="material-icons">close</span>
                     </button>
                 </div>
@@ -69,9 +86,9 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button class="btn btn-secondary" (click)="hideCreateCardModal()">Cancel</button>
-                    <button class="btn btn-primary" (click)="createCard()"
-                        [disabled]="!newCard.front || !newCard.back">Create</button>
+                    <button type="button" class="btn btn-secondary" (click)="hideCreateCardModal()">Cancel</button>
+                    <button type="button" class="btn btn-primary" (click)="createCard()"
+                        [disabled]="!canCreateCard">Create</button>
                 </div>
             </div>
         </div>
@@ -81,41 +98,53 @@
             <table>
                 <thead>
                     <tr>
-                        <th (click)="toggleSort('front')">
-                            Front
-                            <span class="material-icons sort-icon" *ngIf="sortConfig.column === 'front'">
-                                {{ sortConfig.direction === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
-                            </span>
+                        <th [attr.aria-sort]="getSortDirection('front')">
+                            <button type="button" class="sort-button" (click)="toggleSort('front')">
+                                Front
+                                <span class="material-icons sort-icon" *ngIf="sortConfig.column === 'front'">
+                                    {{ sortConfig.direction === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
+                                </span>
+                            </button>
                         </th>
-                        <th (click)="toggleSort('back')">
-                            Back
-                            <span class="material-icons sort-icon" *ngIf="sortConfig.column === 'back'">
-                                {{ sortConfig.direction === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
-                            </span>
+                        <th [attr.aria-sort]="getSortDirection('back')">
+                            <button type="button" class="sort-button" (click)="toggleSort('back')">
+                                Back
+                                <span class="material-icons sort-icon" *ngIf="sortConfig.column === 'back'">
+                                    {{ sortConfig.direction === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
+                                </span>
+                            </button>
                         </th>
-                        <th (click)="toggleSort('correct')">
-                            Correct
-                            <span class="material-icons sort-icon" *ngIf="sortConfig.column === 'correct'">
-                                {{ sortConfig.direction === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
-                            </span>
+                        <th [attr.aria-sort]="getSortDirection('correct')">
+                            <button type="button" class="sort-button" (click)="toggleSort('correct')">
+                                Correct
+                                <span class="material-icons sort-icon" *ngIf="sortConfig.column === 'correct'">
+                                    {{ sortConfig.direction === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
+                                </span>
+                            </button>
                         </th>
-                        <th (click)="toggleSort('incorrect')">
-                            Incorrect
-                            <span class="material-icons sort-icon" *ngIf="sortConfig.column === 'incorrect'">
-                                {{ sortConfig.direction === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
-                            </span>
+                        <th [attr.aria-sort]="getSortDirection('incorrect')">
+                            <button type="button" class="sort-button" (click)="toggleSort('incorrect')">
+                                Incorrect
+                                <span class="material-icons sort-icon" *ngIf="sortConfig.column === 'incorrect'">
+                                    {{ sortConfig.direction === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
+                                </span>
+                            </button>
                         </th>
-                        <th (click)="toggleSort('lastCorrect')">
-                            Last Correct
-                            <span class="material-icons sort-icon" *ngIf="sortConfig.column === 'lastCorrect'">
-                                {{ sortConfig.direction === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
-                            </span>
+                        <th [attr.aria-sort]="getSortDirection('lastCorrect')">
+                            <button type="button" class="sort-button" (click)="toggleSort('lastCorrect')">
+                                Last Correct
+                                <span class="material-icons sort-icon" *ngIf="sortConfig.column === 'lastCorrect'">
+                                    {{ sortConfig.direction === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
+                                </span>
+                            </button>
                         </th>
-                        <th (click)="toggleSort('tags')">
-                            Tags
-                            <span class="material-icons sort-icon" *ngIf="sortConfig.column === 'tags'">
-                                {{ sortConfig.direction === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
-                            </span>
+                        <th [attr.aria-sort]="getSortDirection('tags')">
+                            <button type="button" class="sort-button" (click)="toggleSort('tags')">
+                                Tags
+                                <span class="material-icons sort-icon" *ngIf="sortConfig.column === 'tags'">
+                                    {{ sortConfig.direction === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
+                                </span>
+                            </button>
                         </th>
                         <th>Actions</th>
                     </tr>
@@ -129,18 +158,23 @@
                         <td>{{ card.lastCorrectDate | date }}</td>
                         <td>
                             <div class="tags-container">
-                                <span class="tag" *ngFor="let tag of getTags(card.tags)" (click)="onTagClick(tag)"
-                                    [class.active]="tag === activeTagFilter">
+                                <button type="button" class="tag" *ngFor="let tag of getTags(card.tags)"
+                                    (click)="onTagClick(tag)" [class.active]="tag === activeTagFilter"
+                                    [attr.aria-pressed]="tag === activeTagFilter" [title]="'Filter by ' + tag">
                                     {{ tag }}
-                                </span>
+                                </button>
                             </div>
                         </td>
                         <td>
                             <div class="action-buttons">
-                                <button class="btn btn-sm btn-outline-primary" (click)="editFlashcard(card)">
+                                <button type="button" class="btn btn-sm btn-outline-primary"
+                                    [title]="'Edit ' + card.front" [attr.aria-label]="'Edit ' + card.front"
+                                    (click)="editFlashcard(card)">
                                     <span class="material-icons">edit</span>
                                 </button>
-                                <button class="btn btn-sm btn-outline-danger" (click)="deleteFlashcard(card)">
+                                <button type="button" class="btn btn-sm btn-outline-danger"
+                                    [title]="'Delete ' + card.front" [attr.aria-label]="'Delete ' + card.front"
+                                    (click)="deleteFlashcard(card)">
                                     <span class="material-icons">delete</span>
                                 </button>
                             </div>
@@ -153,10 +187,17 @@
         <!-- Empty State -->
         <div class="empty-state" *ngIf="flashcards.length === 0">
             <span class="material-icons">search_off</span>
-            <p>No cards found matching your search</p>
-            <button class="clear-filters" (click)="clearFilters()">
+            <p>{{ isFiltered ? 'No cards found matching your filters' : 'This deck has no cards yet' }}</p>
+            <button type="button" class="clear-filters" *ngIf="isFiltered; else createFirstCard"
+                (click)="clearFilters()">
                 Clear all filters
             </button>
+            <ng-template #createFirstCard>
+                <button type="button" class="btn btn-primary create-card-btn" (click)="showCreateCardModal()">
+                    <span class="material-icons">add</span>
+                    Create first card
+                </button>
+            </ng-template>
         </div>
     </div>
 
@@ -172,11 +213,12 @@
     </app-edit-flashcard-modal>
 
     <!-- Delete Confirmation Modal -->
-    <div class="modal" *ngIf="showDeleteModal">
-        <div class="modal-content">
+        <div class="modal" *ngIf="showDeleteModal">
+        <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="delete-card-title">
             <div class="modal-header">
-                <h4>Delete Flashcard</h4>
-                <button class="close-btn" (click)="hideDeleteModal()">
+                <h4 id="delete-card-title">Delete Flashcard</h4>
+                <button type="button" class="close-btn" title="Close delete card dialog"
+                    aria-label="Close delete card dialog" (click)="hideDeleteModal()">
                     <span class="material-icons">close</span>
                 </button>
             </div>
@@ -189,8 +231,8 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" (click)="hideDeleteModal()">Cancel</button>
-                <button class="btn btn-danger" (click)="confirmDelete()">Delete</button>
+                <button type="button" class="btn btn-secondary" (click)="hideDeleteModal()">Cancel</button>
+                <button type="button" class="btn btn-danger" (click)="confirmDelete()">Delete</button>
             </div>
         </div>
     </div>

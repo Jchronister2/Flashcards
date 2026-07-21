@@ -8,6 +8,7 @@ import { AppRoutingModule } from './app-routing.module'
 import { AppComponent } from './app.component'
 import { DecksComponent } from './decks/decks.component'
 import { EditFlashcardModalComponent } from './edit-flashcard-modal/edit-flashcard-modal.component'
+import { LoginComponent } from './login/login.component'
 import { ProfileComponent } from './profile/profile.component'
 import { StudyComponent } from './study/study.component'
 
@@ -16,6 +17,7 @@ import { StudyComponent } from './study/study.component'
     AppComponent,
     DecksComponent,
     EditFlashcardModalComponent,
+    LoginComponent,
     ProfileComponent,
     StudyComponent
   ],

@@ -10,15 +10,17 @@
 
             <nav class="side-nav">
                 <div class="nav-label">Study mode</div>
-                <a routerLink="/study" routerLinkActive="active" class="side-nav-item">
+                <a routerLink="/study" class="side-nav-item" [class.active]="isFlashcardsMode">
                     <span class="material-icons">web_stories</span>
                     <span>Flashcards</span>
                 </a>
-                <a routerLink="/study" class="side-nav-item muted">
+                <a routerLink="/study" [queryParams]="{ mode: 'review' }" class="side-nav-item"
+                    [class.active]="isReviewMode">
                     <span class="material-icons">history</span>
                     <span>Review</span>
                 </a>
-                <a routerLink="/study" class="side-nav-item muted">
+                <a routerLink="/study" [queryParams]="{ mode: 'learn' }" class="side-nav-item"
+                    [class.active]="isLearnMode">
                     <span class="material-icons">school</span>
                     <span>Learn</span>
                 </a>
@@ -27,14 +29,29 @@
             <div class="deck-nav">
                 <div class="nav-label with-action">
                     <span>Decks</span>
-                    <span class="material-icons">add</span>
+                    <button type="button" class="nav-label-action" title="Create deck" aria-label="Create deck"
+                        (click)="openCreateDeckForm()">
+                        <span class="material-icons">add</span>
+                    </button>
                 </div>
+                <form class="create-deck-form" *ngIf="showCreateDeckForm" (ngSubmit)="createDeck()">
+                    <input name="deckName" [(ngModel)]="newDeckName" placeholder="Deck name" aria-label="Deck name"
+                        (keydown.escape)="closeCreateDeckForm()" autofocus>
+                    <button type="submit" title="Save deck" aria-label="Save deck" [disabled]="!newDeckName.trim()">
+                        <span class="material-icons">check</span>
+                    </button>
+                    <button type="button" title="Cancel creating deck" aria-label="Cancel creating deck"
+                        (click)="closeCreateDeckForm()">
+                        <span class="material-icons">close</span>
+                    </button>
+                </form>
                 <a routerLink="/decks" routerLinkActive="active" class="side-nav-item">
                     <span class="material-icons">folder</span>
                     <span>All decks</span>
                     <span class="item-count">{{ decks.length || 0 }}</span>
                 </a>
-                <button *ngFor="let deck of decks" class="deck-link" [class.active]="deck.id === currentDeck?.id">
+                <button type="button" *ngFor="let deck of decks" class="deck-link"
+                    [class.active]="deck.id === currentDeck?.id" (click)="selectDeck(deck.id)">
                     <span>{{ deck.name }}</span>
                     <span class="item-count" *ngIf="deck.id === currentDeck?.id">{{ dueCount }}</span>
                 </button>
@@ -54,10 +71,12 @@
                 </div>
                 <div class="top-actions">
                     <div class="sync-status">
-                        <span class="material-icons">check_circle</span>
-                        Synced just now
+                        <span class="material-icons">{{ syncIcon }}</span>
+                        {{ syncLabel }}
                     </div>
-                    <button class="icon-button" type="button" title="Toggle theme" (click)="toggleTheme()"
+                    <button class="icon-button" type="button"
+                        [title]="isDarkMode ? 'Use light theme' : 'Use dark theme'"
+                        [attr.aria-label]="isDarkMode ? 'Use light theme' : 'Use dark theme'" (click)="toggleTheme()"
                         [attr.aria-pressed]="isDarkMode">
                         <span class="material-icons">{{ isDarkMode ? 'light_mode' : 'dark_mode' }}</span>
                     </button>

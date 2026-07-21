@@ -9,10 +9,17 @@
     gap: 10px;
     min-height: 48px;
     padding: 4px 8px 4px 4px;
+    border: 0;
     border-radius: 8px;
+    background: transparent;
     color: #24364b;
     cursor: pointer;
     transition: background-color 0.2s;
+}
+
+.profile-button:focus-visible {
+    outline: 3px solid rgba(23, 105, 232, 0.24);
+    outline-offset: 2px;
 }
 
 .profile-button:hover {
@@ -133,4 +140,29 @@
     .profile-name {
         display: none;
     }
+}
+
+:host-context(.dark-theme) .profile-button,
+:host-context(.dark-theme) .profile-name,
+:host-context(.dark-theme) .expand-icon {
+    color: #dbe7f6;
+}
+
+:host-context(.dark-theme) .profile-button:hover {
+    background: #172b4d;
+}
+
+:host-context(.dark-theme) .profile-menu {
+    border-color: #2d405b;
+    background: #111c2f;
+}
+
+:host-context(.dark-theme) .user-name {
+    color: #f8fbff;
+}
+
+:host-context(.dark-theme) .user-email,
+:host-context(.dark-theme) .copy-login-button,
+:host-context(.dark-theme) .logout-button {
+    color: #98a8bd;
 }

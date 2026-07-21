@@ -29,7 +29,13 @@ export class EditFlashcardModalComponent {
   }
 
   onSave() {
-    this.save.emit(this.editedFlashcard)
+    if (!this.editedFlashcard.front.trim() || !this.editedFlashcard.back.trim()) return
+    this.save.emit({
+      ...this.editedFlashcard,
+      front: this.editedFlashcard.front.trim(),
+      back: this.editedFlashcard.back.trim(),
+      tags: this.editedFlashcard.tags.trim()
+    })
   }
 
   onClose() {

@@ -1,29 +1,67 @@
-import { TestBed } from '@angular/core/testing';
-import { RouterTestingModule } from '@angular/router/testing';
-import { AppComponent } from './app.component';
+import { BehaviorSubject } from 'rxjs'
+
+import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core'
+import { ComponentFixture, TestBed } from '@angular/core/testing'
+import { FormsModule } from '@angular/forms'
+import { RouterTestingModule } from '@angular/router/testing'
+
+import { AppComponent } from './app.component'
+import { FlashService } from './flash.service'
+import { GoogleAuthService } from './google-auth.service'
 
 describe('AppComponent', () => {
-  beforeEach(() => TestBed.configureTestingModule({
-    imports: [RouterTestingModule],
-    declarations: [AppComponent]
-  }));
+  let fixture: ComponentFixture<AppComponent>
+  let component: AppComponent
+  let flashService: jasmine.SpyObj<FlashService>
 
-  it('should create the app', () => {
-    const fixture = TestBed.createComponent(AppComponent);
-    const app = fixture.componentInstance;
-    expect(app).toBeTruthy();
-  });
+  beforeEach(() => {
+    localStorage.clear()
+    flashService = jasmine.createSpyObj<FlashService>('FlashService', ['selectDeck', 'createDeck'], {
+      flashcards: [],
+      decks: [],
+      currentDeck: null
+    })
+    const authService = {
+      user$: new BehaviorSubject(null),
+      isPreviewMode: false,
+      isAuthenticated: () => false,
+      initializeClient: () => undefined,
+      signIn: () => undefined,
+      signOut: () => undefined
+    }
 
-  it(`should have as title 'Flashcards'`, () => {
-    const fixture = TestBed.createComponent(AppComponent);
-    const app = fixture.componentInstance;
-    expect(app.title).toEqual('Flashcards');
-  });
+    TestBed.configureTestingModule({
+      imports: [FormsModule, RouterTestingModule],
+      declarations: [AppComponent],
+      providers: [
+        { provide: FlashService, useValue: flashService },
+        { provide: GoogleAuthService, useValue: authService }
+      ],
+      schemas: [CUSTOM_ELEMENTS_SCHEMA]
+    })
 
-  it('should render title', () => {
-    const fixture = TestBed.createComponent(AppComponent);
-    fixture.detectChanges();
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('.content span')?.textContent).toContain('Flashcards app is running!');
-  });
-});
+    fixture = TestBed.createComponent(AppComponent)
+    component = fixture.componentInstance
+  })
+
+  it('creates the app', () => {
+    expect(component).toBeTruthy()
+  })
+
+  it('persists the selected theme', () => {
+    component.toggleTheme()
+
+    expect(component.isDarkMode).toBeTrue()
+    expect(localStorage.getItem('flashcards_theme')).toBe('dark')
+  })
+
+  it('creates a trimmed deck name', () => {
+    component.newDeckName = '  Spanish  '
+    component.showCreateDeckForm = true
+
+    component.createDeck()
+
+    expect(flashService.createDeck).toHaveBeenCalledOnceWith('Spanish')
+    expect(component.showCreateDeckForm).toBeFalse()
+  })
+})

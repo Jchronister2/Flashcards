@@ -7,7 +7,7 @@
 
         <div class="deck-switcher">
             <span class="material-icons">style</span>
-            <select [(ngModel)]="selectedDeckId" (ngModelChange)="onDeckChange()">
+            <select [ngModel]="currentDeck?.id" (ngModelChange)="onDeckChange($event)" aria-label="Study deck">
                 <option *ngFor="let deck of decks" [ngValue]="deck.id">{{ deck.name }}</option>
             </select>
             <span class="divider"></span>
@@ -16,50 +16,54 @@
         </div>
 
         <div class="toolbar-actions">
-            <button type="button" title="Options" (click)="toggleOptions()" [attr.aria-expanded]="showOptionsPanel">
+            <button type="button" title="Study options" aria-label="Study options" (click)="toggleOptions()"
+                [attr.aria-expanded]="showOptionsPanel" aria-haspopup="menu">
                 <span class="material-icons">settings</span>
                 Options
             </button>
-            <button type="button" title="Fullscreen" (click)="toggleFullscreen()">
+            <button type="button" [title]="isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'"
+                [attr.aria-label]="isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'"
+                [attr.aria-pressed]="isFullscreen" (click)="toggleFullscreen()">
                 <span class="material-icons">{{ isFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</span>
                 {{ isFullscreen ? 'Exit' : 'Fullscreen' }}
             </button>
 
-            <div class="options-popover" *ngIf="showOptionsPanel">
-                <button type="button" (click)="shuffleCard()">
+            <div class="options-popover" *ngIf="showOptionsPanel" role="menu" aria-label="Study options">
+                <button type="button" role="menuitem" (click)="shuffleCard()">
                     <span class="material-icons">shuffle</span>
                     Shuffle next card
                 </button>
-                <button type="button" (click)="clearAnswer()">
+                <button type="button" role="menuitem" (click)="clearAnswer()">
                     <span class="material-icons">backspace</span>
                     Clear answer
                 </button>
-                <button type="button" (click)="openEditModal(); showOptionsPanel = false">
+                <button type="button" role="menuitem" (click)="openEditModal(); showOptionsPanel = false">
                     <span class="material-icons">edit</span>
                     Edit current card
                 </button>
-                <button type="button" (click)="copyCurrentCard()">
+                <button type="button" role="menuitem" (click)="copyCurrentCard()">
                     <span class="material-icons">content_copy</span>
                     Copy current card
                 </button>
             </div>
         </div>
     </div>
+    <div class="action-message" *ngIf="actionMessage" role="status" aria-live="polite">{{ actionMessage }}</div>
 
     <div class="loading-state" *ngIf="!currentFlashcard">
         <div class="loading-card">
             <span class="material-icons">style</span>
-            <h2>{{ decks.length === 0 ? 'Loading decks...' : 'Select a deck to start studying' }}</h2>
-            <p>Your flashcards will appear here once the deck is ready.</p>
+            <h2>{{ decks.length === 0 ? 'Loading decks...' : 'No cards in this study mode' }}</h2>
+            <p>{{ decks.length === 0 ? 'Your decks will appear here once Google Sheets is ready.' : 'Create a card or choose another deck or mode.' }}</p>
         </div>
     </div>
 
     <div class="study-grid" *ngIf="currentFlashcard">
         <main class="study-workspace">
             <div class="progress-row">
-                <span class="position-pill">{{ currentCardIndex }} / {{ flashcards.length }}</span>
+                <span class="position-pill">{{ currentCardIndex }} / {{ studyCards.length }}</span>
                 <div class="progress-track">
-                    <div class="progress-fill" [style.width.%]="flashcards.length ? (currentCardIndex / flashcards.length) * 100 : 0"></div>
+                    <div class="progress-fill" [style.width.%]="studyCards.length ? (currentCardIndex / studyCards.length) * 100 : 0"></div>
                 </div>
             </div>
 
@@ -69,7 +73,8 @@
                         (click)="toggleBookmark()" [class.active]="isBookmarked">
                         <span class="material-icons">{{ isBookmarked ? 'bookmark' : 'bookmark_border' }}</span>
                     </button>
-                    <button type="button" title="Read aloud" (click)="speakCard()">
+                    <button type="button" title="Read card aloud" aria-label="Read card aloud" (click)="speakCard()"
+                        [disabled]="!canSpeak">
                         <span class="material-icons">volume_up</span>
                     </button>
                 </div>
@@ -85,7 +90,7 @@
             </article>
 
             <div class="answer-panel">
-                <input type="text" [(ngModel)]="answer" placeholder="Type your answer"
+                <input type="text" [(ngModel)]="answer" placeholder="Type your answer" aria-label="Your answer"
                     (keydown.enter)="submitAnswer()" [disabled]="isForceCorrectAnswer && isAnsweredCorrectly" />
                 <button class="primary-action" (click)="isRevealed ? submitAnswer() : revealAnswer()">
                     <span class="material-icons">{{ isRevealed ? 'check' : 'visibility' }}</span>
@@ -96,17 +101,20 @@
             <p class="feedback" *ngIf="feedback">{{ feedback }}</p>
 
             <div class="rating-actions">
-                <button class="again" (click)="markAgain()">
+                <button class="again" (click)="markAgain()" [disabled]="!isRevealed"
+                    [title]="isRevealed ? 'Review this card again soon' : 'Reveal the answer before rating'">
                     <span class="material-icons">replay</span>
                     Again
                     <small>1 Hard</small>
                 </button>
-                <button class="good" (click)="markGood()">
+                <button class="good" (click)="markGood()" [disabled]="!isRevealed"
+                    [title]="isRevealed ? 'Mark this card as good' : 'Reveal the answer before rating'">
                     <span class="material-icons">radio_button_unchecked</span>
                     Good
                     <small>2 Okay</small>
                 </button>
-                <button class="easy" (click)="markEasy()">
+                <button class="easy" (click)="markEasy()" [disabled]="!isRevealed"
+                    [title]="isRevealed ? 'Lower this card priority' : 'Reveal the answer before rating'">
                     <span class="material-icons">check_circle</span>
                     Easy
                     <small>3 Easy</small>
@@ -124,8 +132,8 @@
                 <div class="summary-metrics">
                     <div>
                         <span class="material-icons calendar">event_available</span>
-                        <strong>{{ flashcards.length }} due</strong>
-                        <small>Needs review</small>
+                        <strong>{{ flashcards.length }} cards</strong>
+                        <small>In this deck</small>
                     </div>
                     <div>
                         <span class="material-icons streak">local_fire_department</span>
